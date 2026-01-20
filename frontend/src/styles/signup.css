@@ -1,0 +1,237 @@
+/* Useful for later uses in this file*/
+:root {
+    --bg: #EFE0C8;
+    --panel: #FBF7F3;
+    --accent: #E68F21;
+    --dark: #2b2929;
+    --soft: #F2E1CB;
+    --muted: #7B6E63;
+    --radius: 18px;
+}
+
+* {
+    box-sizing: border-box
+}
+
+.page-bg {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(90deg, var(--bg), #F5E8D0 50%);
+    padding: 36px 18px;
+}
+
+/* The whole sign up form */
+.modal {
+    width: 460px;
+    max-width: 95vw;
+    background: var(--panel);
+    border-radius: 28px;
+    padding: 34px 48px 36px 48px;
+    position: relative;
+    box-shadow: 0 30px 30px rgba(126, 96, 63, 0.08), 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* The close button */
+.close {
+    position: absolute;
+    right: 24px;
+    top: 18px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: none;
+    border: none;
+    font-size: 26px;
+    color: var(--dark);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.2s ease;
+}
+
+.close:hover {
+    background-color: #f4e9d2;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(18, 18, 18, 0.12);
+}
+
+.close-sign {
+    color: #2b2929;
+}
+
+/* The logo and title of the form */
+.brand {
+    text-align: center;
+    margin-top: 6px;
+}
+
+.logo {
+    width: 74px;
+    height: 74px;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.title {
+    color: #9A6A4E;
+    font-size: 20px;
+    margin: 6px 0;
+}
+
+.subtitle {
+    color: #2C5C5A;
+    margin: 4px 0 22px;
+    font-size: 18px;
+}
+
+
+
+/* The input sections */
+.reg-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 6px;
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    color: var(--dark);
+    font-weight: 500;
+}
+
+label input,
+label select {
+    margin-top: 10px;
+    padding: 18px 20px;
+    border-radius: 18px;
+    border: 0;
+    background: var(--soft);
+    font-size: 16px;
+    color: var(--dark);
+    outline: none;
+}
+
+label select {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--dark) 50%), linear-gradient(135deg, var(--dark) 50%, transparent 50%);
+    background-position: calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+}
+
+label input::placeholder {
+    color: var(--muted);
+}
+
+/* The create account button */
+.create {
+    margin-top: 6px;
+    background: var(--dark);
+    color: var(--panel);
+    padding: 18px;
+    border-radius: 26px;
+    border: 0;
+    font-weight: 500;
+    font-size: 18px;
+    transition: all 0.2s ease;
+}
+
+.create:hover {
+    box-shadow: 0 12px 30px rgba(23, 35, 45, 0.25);
+    transform: translateY(-3px) scale(1.03);
+}
+
+/* The or line */
+.or-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+    font-size: 20px;
+}
+
+.or-line::before,
+.or-line::after {
+    content: ' ';
+    flex: 1;
+    height: 1px;
+    background: #EEDFCC;
+}
+
+.or-line span {
+    padding: 8px;
+    color: #9E9E9E;
+    text-align: center;
+}
+
+/* The login link */
+.login_foot {
+    text-align: center;
+    margin-top: 16px;
+    color: var(--dark);
+    font-size: 16px;
+}
+
+.login-link {
+    color: var(--accent);
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.login-link:hover {
+    text-decoration: underline;
+}
+
+/* The help or contact link */
+.help {
+    text-align: center;
+    margin-top: 8px;
+}
+
+.contact-us {
+    color: #094240;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.contact-us:hover {
+    text-decoration: underline;
+}
+
+.form-message {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.form-message.error {
+    color: #D93025;
+}
+
+.form-message.success {
+    color: #188038;
+}
+
+@media (max-width:520px) {
+    .modal {
+        padding: 22px;
+    }
+
+    .photo-circle {
+        width: 96px;
+        height: 96px;
+        border-radius: 48px;
+    }
+}
