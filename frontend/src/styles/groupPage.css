@@ -216,7 +216,6 @@ body{
   flex-direction: column; 
   min-height: 100vh;
   flex: 1;
-  overflow-y: auto;
   background: var(--bg);
   padding: 20px 16px;
 }
@@ -224,6 +223,8 @@ body{
 .grouppage-messages-area {
   flex: 1;  
   overflow-y: auto;
+  display: flex; 
+  flex-direction: column;
   gap: 20px;
   align-items: flex-start;
 }

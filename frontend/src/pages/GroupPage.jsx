@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import "../styles/groupPage.css";
 import "../styles/general.css";
 
-export default function MyProfile() {
+export default function GroupPage() {
   const navigate = useNavigate();
 
   const headerRightRef = useRef(null);
@@ -15,6 +15,13 @@ export default function MyProfile() {
 
   const [currentRating, setCurrentRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
+  
+
+  useEffect(() => { 
+    if (messagesAreaRef.current) { 
+      messagesAreaRef.current.scrollTop = 0;  
+    } 
+  }, []);
 
   /* ---------------- HEADER MENU ---------------- */
 
@@ -120,6 +127,7 @@ export default function MyProfile() {
 
   return (
     <>
+    <div className="whole-grouppage">
       <header className="grouppage-chat-header">
         <div className="grouppage-header-left">
           <div className="grouppage-group-icon" ref={groupIconRef} onClick={openSidebar}>
@@ -374,6 +382,7 @@ export default function MyProfile() {
           </p>
         </div>
       </aside>
+      </div>
     </>
   );
 }

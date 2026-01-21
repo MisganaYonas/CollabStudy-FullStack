@@ -132,6 +132,9 @@ label input::placeholder {
     color: var(--muted);
 }
 
+.labels {
+    font-size: 16px;
+}
 /* The create account button */
 .create {
     margin-top: 6px;
@@ -174,7 +177,7 @@ label input::placeholder {
 }
 
 /* The login link */
-.login_foot {
+.loginpage_foot {
     text-align: center;
     margin-top: 16px;
     color: var(--dark);

@@ -1,4 +1,4 @@
-body {
+.whole-dashboard {
     padding-top: 80px; 
     margin:0;
     font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
@@ -23,7 +23,7 @@ body {
 }
 
 *{box-sizing:border-box}
-html,body{
+html,.whole-dashboard{
   height:100%;
 }
 
@@ -257,14 +257,14 @@ html,body{
 /* The page wrapper */
 .page-wrap{ 
   max-width: 1220px; 
-  margin: 20px auto; 
+  margin: 0 auto;
   padding: 0 18px 60px; 
 }
 
 /* The search and create group part */
 .hero-row{ 
   display:flex; gap:28px; margin-bottom:26px; align-items:stretch; 
-  margin-top: 100px;
+  margin-top: 40px;
 }
 
 .hero-card{
@@ -471,8 +471,23 @@ html,body{
   background: linear-gradient(180deg,#f9efe0,#f2e3c8);
   box-shadow:0 4px 12px rgba(0,0,0,0.04);
   font-weight:300;
-  cursor:default;
+  cursor:pointer;
   font-size: 14px;
+  display: inline-block;
+  margin: 2px;
+  border: 1px solid #ccc;
+  user-select: none;
+  background-color: #f4f4f4;
+}
+
+.day-chip.selected {
+  background-color: #3f6a6c;
+  color: white;
+  border-color: #3f6a6c;
+}
+
+.day-chip input {
+  display: none; 
 }
 
 /* The group status row */

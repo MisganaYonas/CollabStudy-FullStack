@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../styles/signup.css";
 import Logo from "../images/Logo.png";
 
 function Signup() {
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,6 +58,10 @@ function Signup() {
   localStorage.setItem("CollabStudyUser", JSON.stringify(user));
 
   showSuccess("Account created successfully!");
+
+  setTimeout(() => {
+    navigate("/login");
+  }, 1200);
 };
 
  
@@ -89,7 +94,7 @@ function Signup() {
                 <p className="subtitle">Join the CollabStudy community</p>
             </div>
             <form className="reg-form" id="signupForm" autoComplete="off" onSubmit={handleSubmit}>
-                <label>Username
+                <label className="labels">Username
                     <input
                         type="text"
                         placeholder="Enter your username"
@@ -99,7 +104,7 @@ function Signup() {
                     />
 
                 </label>
-                <label>AAU Email
+                <label className="labels">AAU Email
                     <input
                         type="email"
                         placeholder="name.ugr-xxxx-xx@aau.edu.et"
@@ -108,7 +113,7 @@ function Signup() {
                         required
                     />
                 </label>
-                <label>Password
+                <label className="labels">Password
                     <input
                         type="password"
                         placeholder="Create a password"
@@ -117,7 +122,7 @@ function Signup() {
                         required
                     />
                 </label>
-                <label>Confirm Password
+                <label className="labels">Confirm Password
                     <input
                         type="password"
                         placeholder="Confirm your password"
@@ -127,7 +132,7 @@ function Signup() {
                     />
 
                 </label>
-                <label>
+                <label className="labels">
                     Major or Department
                     <input
                         type="text"
@@ -137,7 +142,7 @@ function Signup() {
                         required
                     />
                 </label>
-                <label>
+                <label className="labels">
                     Year
                     <select value={year} onChange={(e) => setYear(e.target.value)} required>
                         <option value="">Select your year</option>
@@ -161,7 +166,7 @@ function Signup() {
             <div className="or-line">
                 <span className="or-line">or</span>
             </div>
-            <p className="login-foot">
+            <p className="loginpage_foot">
                 Already have an account? <Link to="/Login" className="login-link">Log In</Link>
             </p>
             <p className="help">

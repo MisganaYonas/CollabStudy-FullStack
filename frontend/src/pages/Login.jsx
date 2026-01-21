@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../styles/login.css"; 
 import Logo from "../images/Logo.png"; 
 
 function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -25,6 +26,10 @@ function Login() {
 
     setMessage("Login successful!");
     setMessageType("success");
+
+    setTimeout(() => {
+    navigate("/dashboard");
+  }, 800);
   };
 
   return (

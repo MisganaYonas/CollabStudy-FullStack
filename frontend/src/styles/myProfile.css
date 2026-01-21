@@ -14,14 +14,15 @@
 }
 
 *{box-sizing:border-box}
-html,body{height:100%;}
-body{
+html,.whole-myprofile{height:100%;}
+.whole-myprofile{
   margin:0;
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   background:var(--bg);
   color:#123231;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
+  background-color: var(--bg);
 }
 
 /* The profile Page Header */

@@ -34,6 +34,7 @@ export default function MyProfile() {
 
   return (
     <>
+    <div className="whole-myprofile">
       <header className="profile-header">
         <h1 className="profile-title">My Profile</h1>
         <button
@@ -357,6 +358,7 @@ export default function MyProfile() {
           </svg>
         </button>
       </div>
+    </div>
     </>
   );
 }
