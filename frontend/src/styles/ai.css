@@ -1,0 +1,134 @@
+.aipage-full {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: #f6e7cf;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    position: relative;
+    height: 100vh;  
+    width: 100vw;
+}
+
+.aipage-chat-container {
+    width: 100%;
+    height: 100hv;
+    background: #f4e4c7;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin: 0; 
+    padding: 0;
+}
+
+.aipage-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: #e7d7bd;
+    border-bottom: 1px solid #d4c3a9;
+}
+
+.aipage-icon {
+    width: 32px;
+    height: 32px;
+    background: #4a6c6f;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+/* <-- added missing closing brace */
+
+.aipage-title {
+    font-weight: bold;
+    color: #5c3b2e;
+    font-family: "Lora", serif;
+}
+
+.aipage-status {
+    font-size: 12px;
+    color: #4a6c6f;
+    margin-top: 2px;
+}
+
+.aipage-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 28px;
+    font-weight: 600;
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+    z-index: 10;
+    transition: 0.2s ease;
+}
+
+.aipage-close-btn:hover {
+    color: #000;
+    transform: scale(1.12);
+}
+
+.aipage-message-box {
+    background: white;
+    margin: 20px;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #333;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    font-family: "Poppins", sans-serif;
+}
+
+.aipage-timestamp {
+    font-size: 12px;
+    color: #8c8c8c;
+    margin-top: 4px;
+}
+
+.aipage-spacer {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.aipage-input-area {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: #e7d7bd;
+    position: fixed; 
+    bottom: 0;  
+    left: 0;
+    right: 0;
+}
+
+.aipage-input-field {
+    flex-grow: 1;
+    background: #ffffff;
+    border: 1px solid #ccc;
+    padding: 12px;
+    border-radius: 10px;
+    outline: none;
+    font-size: 14px;
+}
+
+.aipage-send-btn {
+    width: 40px;
+    height: 40px;
+    margin-left: 10px;
+    background: #3f6a6c;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+.svg {
+    width: 20px;
+    height: 20px;
+    color: white;
+    padding:7px;
+}
