@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/login.css"; 
@@ -9,8 +10,9 @@ function Login() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!email || !password) {
@@ -24,12 +26,39 @@ function Login() {
       return;
     }
 
-    setMessage("Login successful!");
-    setMessageType("success");
+    setLoading(true);
+    setMessage("");
 
-    setTimeout(() => {
-    navigate("/dashboard");
-  }, 800);
+    try {
+      const response = await fetch("http://localhost/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        localStorage.setItem("token", data.token); 
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        setMessage("Login successful!");
+        setMessageType("success");
+
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 500);
+      } else {
+        setMessage(data.message || "Login failed.");
+        setMessageType("error");
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage("Server error. Please try again later.");
+      setMessageType("error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -82,7 +111,8 @@ function Login() {
             </div>
           </div>
 
-          <div className="input-group">
+Praise, [1/31/2026 1:34 AM]
+<div className="input-group">
             <label htmlFor="password">Password</label>
             <div className="input-inner">
               <svg className="icon icon-lock" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
@@ -107,7 +137,9 @@ function Login() {
           )}
 
           <div className="login">
-            <button type="submit" className="btn-login">Login</button>
+            <button type="submit" className="btn-login" disabled={loading}>
+              {loading ? "Logging in..." : "Login"}
+            </button>
           </div>
 
           <p className="forgot">Forgot password?</p>
