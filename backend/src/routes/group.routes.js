@@ -1,29 +1,45 @@
-const Group = require("../models/Group.model");
+// src/routes/group.routes.js
+const { connectDB } = require("../config/db");
+const GroupController = require("../controllers/group.controller");
 
-async function createGroup(req, res, body) {
-  const { name, subject, description, maxMembers, preferredTime, members } = body;
+// DB & controller instances (reuse the same for all requests)
+let dbInstance = null;
+let groupController = null;
 
-  if (!name || !subject || !description || !maxMembers) {
-    res.writeHead(400, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify({ error: "Missing required fields" }));
-  }
-
-  try {
-    const group = new Group({
-      name,
-      subject,
-      description,
-      maxMembers,
-      preferredTime,
-      members,
-    });
-    await group.save();
-    res.writeHead(201, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ message: "Group created", groupId: group._id }));
-  } catch (err) {
-    res.writeHead(500, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Failed to create group" }));
+async function init() {
+  if (!dbInstance) {
+    dbInstance = await connectDB();
+    groupController = new GroupController(dbInstance);
   }
 }
 
-module.exports = { createGroup };
+// Route: POST /api/group/create
+async function createGroup(req, res) {
+  await init();
+  return groupController.createGroup(req, res);
+}
+
+// Route: GET /api/group/get?groupId=...
+async function getGroup(req, res) {
+  await init();
+  return groupController.getGroup(req, res);
+}
+
+// Route: POST /api/group/add-member
+async function addMember(req, res) {
+  await init();
+  return groupController.addMember(req, res);
+}
+
+// Route: POST /api/group/remove-member
+async function removeMember(req, res) {
+  await init();
+  return groupController.removeMember(req, res);
+}
+
+module.exports = {
+  createGroup,
+  getGroup,
+  addMember,
+  removeMember,
+};

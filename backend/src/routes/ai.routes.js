@@ -1,9 +1,19 @@
-async function aiAssist(req, res, body) {
-  const { question } = body;
-  const answer = `This is a mock response to: "${question}"`;
+// src/routes/ai.routes.js
+const AIController = require("../controllers/ai.controller");
+const { initDB } = require("../config/db");
 
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ answer }));
+let aiController = null;
+
+async function init() {
+  if (!aiController) {
+    const db = await initDB();
+    aiController = new AIController(db);
+  }
 }
 
-module.exports = { aiAssist };
+async function chat(req, res) {
+  await init();
+  return aiController.chat(req, res);
+}
+
+module.exports = { chat };
