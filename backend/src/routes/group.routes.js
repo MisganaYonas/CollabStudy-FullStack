@@ -1,40 +1,75 @@
 // src/routes/group.routes.js
-const { connectDB } = require("../config/db");
 const GroupController = require("../controllers/group.controller");
+const GroupModel = require("../models/Group.model");
 
-// DB & controller instances (reuse the same for all requests)
-let dbInstance = null;
 let groupController = null;
 
-async function init() {
-  if (!dbInstance) {
-    dbInstance = await connectDB();
-    groupController = new GroupController(dbInstance);
+/**
+ * Initialize controller ONCE using shared DB instance
+ */
+function getController(db) {
+  if (!db) {
+    throw new Error("Database instance not provided to group routes");
+  }
+
+  if (!groupController) {
+    const groupModel = new GroupModel(db);
+    groupController = new GroupController(groupModel);
+  }
+
+  return groupController;
+}
+
+/**
+ * POST /api/group/create
+ */
+async function createGroup(req, res, db) {
+  try {
+    return await getController(db).createGroup(req, res);
+  } catch (err) {
+    console.error("Create group error:", err);
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Failed to create group" }));
   }
 }
 
-// Route: POST /api/group/create
-async function createGroup(req, res) {
-  await init();
-  return groupController.createGroup(req, res);
+/**
+ * GET /api/group/get?groupId=...
+ */
+async function getGroup(req, res, db) {
+  try {
+    return await getController(db).getGroup(req, res);
+  } catch (err) {
+    console.error("Get group error:", err);
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Failed to get group" }));
+  }
 }
 
-// Route: GET /api/group/get?groupId=...
-async function getGroup(req, res) {
-  await init();
-  return groupController.getGroup(req, res);
+/**
+ * POST /api/group/add-member
+ */
+async function addMember(req, res, db) {
+  try {
+    return await getController(db).addMember(req, res);
+  } catch (err) {
+    console.error("Add member error:", err);
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Failed to add member" }));
+  }
 }
 
-// Route: POST /api/group/add-member
-async function addMember(req, res) {
-  await init();
-  return groupController.addMember(req, res);
-}
-
-// Route: POST /api/group/remove-member
-async function removeMember(req, res) {
-  await init();
-  return groupController.removeMember(req, res);
+/**
+ * POST /api/group/remove-member
+ */
+async function removeMember(req, res, db) {
+  try {
+    return await getController(db).removeMember(req, res);
+  } catch (err) {
+    console.error("Remove member error:", err);
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Failed to remove member" }));
+  }
 }
 
 module.exports = {

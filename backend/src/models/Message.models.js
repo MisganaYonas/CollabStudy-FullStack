@@ -14,7 +14,12 @@ class MessageModel {
       createdAt: new Date(),
     };
     const result = await this.collection.insertOne(message);
-    return result.ops[0];
+
+  // Fix for modern MongoDB driver
+  return {
+    _id: result.insertedId,
+    ...message
+  };
   }
 
   async getMessagesByGroup(groupId, limit = 50) {
