@@ -1,0 +1,562 @@
+:root{
+  --bg: #f4e9d2;          
+  --panel: #fffdf9;       
+  --cream: #fbf7f2;
+  --orange: #d9851f;      
+  --orange-light: #f4b66b; 
+  --orange-dark: #c66f14;
+  --teal: #2F6B66;       
+  --brown: #7c3f20;       
+  --muted: #6b6a66;
+  --shadow: 0 10px 20px rgba(20,20,20,0.06);
+  --card-radius: 18px;
+  --pill-radius: 26px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;}
+body{
+  margin:0;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background:var(--bg);
+  color:#123231;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The chat header section */
+.grouppage-chat-header {
+  background: white;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.grouppage-header-right{
+  position:relative;
+}
+
+.grouppage-menu-dropdown{
+  min-width: 220px;
+  position:absolute;
+  top:50px;
+  right:0;
+  background:white;
+  border-radius:12px;
+  box-shadow:0 10px 20px rgba(0,0,0,0.12);
+  padding:10px;
+  display:none;
+  flex-direction:column;
+  gap:6px;
+  z-index:20;
+}
+
+.grouppage-header-right.active .grouppage-menu-dropdown{
+  display:flex;
+}
+
+.grouppage-menu-item{
+  white-space: nowrap;   
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background:none;
+  border:none;
+  padding:10px 14px;
+  text-align:left;
+  font-size:14px;
+  cursor:pointer;
+  border-radius:8px;
+  color:#2f4b4a;
+}
+
+.grouppage-menu-item:hover{
+  background:rgba(47,107,102,0.1);
+}
+
+#leaveGroupBtn{
+  color:var(--orange);
+}
+
+#leaveGroupBtn:hover{
+  background:rgba(217,133,31,0.15);
+}
+
+.grouppage-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.grouppage-group-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--teal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.grouppage-group-icon:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(47, 107, 102, 0.4);
+}
+
+.grouppage-group-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.grouppage-group-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.grouppage-group-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--brown);
+  font-family: "Inter", sans-serif;
+}
+
+.course-code {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.grouppage-hamburger-menu {
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  padding: 4px;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  border-radius: 6px;
+}
+
+.grouppage-hamburger-menu:hover {
+  transform: scale(1.1);
+  background-color: rgba(47, 107, 102, 0.1);
+}
+
+.grouppage-hamburger-menu span {
+  width: 22px;
+  height: 2px;
+  background: var(--teal);
+  border-radius: 2px;
+  display: block;
+  transition: background-color 0.3s ease;
+}
+
+/* All the header links */
+.grouppage-header-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #2f4b4a;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.grouppage-header-link-icon {
+  color: var(--teal);
+  flex-shrink: 0;
+  transition: color 0.3s ease;
+}
+
+.grouppage-header-link:hover {
+  background-color: rgba(47, 107, 102, 0.1);
+  transform: translateY(-1px);
+}
+
+.grouppage-header-link:hover .grouppage-header-link-icon {
+  color: var(--teal);
+}
+
+.grouppage-header-link-logout {
+  color: var(--orange);
+}
+
+.grouppage-header-link-logout .grouppage-header-link-icon {
+  color: var(--orange);
+}
+
+.grouppage-header-link-logout:hover {
+  background-color: rgba(217, 133, 31, 0.15);
+}
+
+.grouppage-header-link-logout:hover .grouppage-header-link-icon {
+  color: var(--orange-dark);
+}
+
+/* The chat container */
+.grouppage-chat-container {
+  display: flex; 
+  flex-direction: column; 
+  min-height: 100vh;
+  flex: 1;
+  background: var(--bg);
+  padding: 20px 16px;
+}
+
+.grouppage-messages-area {
+  flex: 1;  
+  overflow-y: auto;
+  display: flex; 
+  flex-direction: column;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+/* The styles of all messages */
+.grouppage-message {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.grouppage-message-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+  font-family: "Inter", sans-serif;
+}
+
+.grouppage-message-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  width: calc(100% - 52px);
+}
+
+.grouppage-message-sender {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--teal);
+  font-family: "Inter", sans-serif;
+}
+
+.grouppage-message-bubble {
+  background: white;
+  border-radius: 18px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.grouppage-message-bubble p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #2a2a2a;
+}
+
+.grouppage-message-time {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+  padding-left: 4px;
+}
+
+/* The chat or message input area */
+.grouppage-chat-input-area {
+  flex-shrink: 0;
+  background: white;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+}
+
+.grouppage-input-container {
+  flex: 1;
+}  
+
+.grouppage-message-input {
+  flex: 1;
+  background: rgba(244, 182, 107, 0.3);
+  border: none;
+  border-radius: 24px;
+  padding: 12px 18px;
+  font-size: 15px;
+  font-family: "Inter", sans-serif;
+  color: #2a2a2a;
+  outline: none;
+  width: 100%;
+}
+
+.grouppage-message-input::placeholder {
+  color: var(--muted);
+}
+
+.grouppage-input-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.grouppage-input-icon:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(47, 107, 102, 0.3);
+}
+
+.grouppage-input-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* The floating AI chatbot */
+.grouppage-chatbot-container{
+  position:fixed;
+  right:16px;
+  bottom:80px;
+  z-index:40;
+}
+
+.grouppage-chatbot{
+  width:78px;
+  height:78px;
+  border-radius:50%;
+  background:var(--teal);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  box-shadow: 0 12px 26px rgba(0,0,0,0.18);
+  cursor:pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position:relative;
+  text-decoration: none;
+}
+
+.grouppage-chatbot:hover{
+  transform: scale(1.05);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.22);
+}
+
+.grouppage-chatbot-icon{
+  width:32px;
+  height:32px;
+  display:block;
+}
+
+.grouppage-chatbot-dot{
+  position:absolute;
+  right:8px;
+  top:-8px;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:var(--orange-light);
+  border:none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.grouppage-group-sidebar {
+  position: fixed;
+  left: -350px;
+  top: 0;
+  width: 350px;
+  height: 100%;
+  background: #2F6B66;
+  color: white;
+  padding: 20px;
+  box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+  transition: left 0.3s ease;
+  z-index: 50;
+  overflow-y: auto;
+  font-family: "Inter", sans-serif;
+}
+
+.grouppage-group-sidebar.active {
+  left: 0;
+}
+
+.grouppage-sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.grouppage-sidebar-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.grouppage-close-sidebar {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.grouppage-sidebar-section {
+  margin-bottom: 24px;
+}
+
+.grouppage-sidebar-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  padding-bottom: 4px;
+}
+
+.grouppage-member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.grouppage-member {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.grouppage-member-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+}
+
+.grouppage-member-info p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.grouppage-member-course {
+  color: rgba(255,255,255,0.7);
+  font-size: 12px;
+}
+
+.grouppage-status.active {
+  background: var(--orange);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Star Rating (Exact Image Style) */
+.grouppage-star-rating {
+  display: flex;
+  gap: 6px;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.grouppage-star-rating .grouppage-star {
+  color: rgba(255, 255, 255, 0.4); /* empty stars */
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+
+.grouppage-star-rating .grouppage-star.filled {
+  color: var(--orange); /* filled stars */
+}
+
+.grouppage-star-rating .grouppage-star:hover {
+  transform: scale(1.1);
+}
+
+/* Rating text */
+.grouppage-rating-text {
+  margin-top: 8px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 49;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+
+@media (max-width: 768px) {
+  .chat-header {
+    padding: 12px 16px;
+  }
+
+  .group-name {
+    font-size: 16px;
+  }
+
+  .course-code {
+    font-size: 13px;
+  }
+
+  .chat-container {
+    padding: 16px 12px;
+  }
+
+  .message-content {
+    width: calc(100% - 52px);
+  }
+}
+
+
