@@ -14,7 +14,7 @@ function getController(db) {
 
   if (!groupController) {
     const groupModel = new GroupModel(db);
-    groupController = new GroupController(groupModel);
+    groupController = new GroupController(groupModel, db);
   }
 
   return groupController;
@@ -34,6 +34,32 @@ async function createGroup(req, res, db) {
 }
 
 /**
+ * POST /api/group/invite
+ */
+async function inviteMember(req, res, db) {
+  try {
+    return await getController(db).inviteMember(req, res);
+  } catch (err) {
+    console.error("Invite member error:", err);
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Failed to invite member" }));
+  }
+}
+
+/**
+ * POST /api/group/search
+ */
+async function searchGroups(req, res, db) {
+  try {
+    return await getController(db).searchGroups(req, res);
+  } catch (err) {
+    console.error("Search groups error:", err);
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Failed to search groups" }));
+  }
+}
+
+/**
  * GET /api/group/get?groupId=...
  */
 async function getGroup(req, res, db) {
@@ -46,35 +72,11 @@ async function getGroup(req, res, db) {
   }
 }
 
-/**
- * POST /api/group/add-member
- */
-async function addMember(req, res, db) {
-  try {
-    return await getController(db).addMember(req, res);
-  } catch (err) {
-    console.error("Add member error:", err);
-    res.writeHead(500, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Failed to add member" }));
-  }
-}
-
-/**
- * POST /api/group/remove-member
- */
-async function removeMember(req, res, db) {
-  try {
-    return await getController(db).removeMember(req, res);
-  } catch (err) {
-    console.error("Remove member error:", err);
-    res.writeHead(500, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Failed to remove member" }));
-  }
-}
-
 module.exports = {
   createGroup,
+  inviteMember,
+  searchGroups,
   getGroup,
-  addMember,
-  removeMember,
 };
+
+

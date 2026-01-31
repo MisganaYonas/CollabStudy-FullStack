@@ -1,19 +1,32 @@
-// src/routes/ai.routes.js
 const AIController = require("../controllers/ai.controller");
-const { initDB } = require("../config/db");
 
 let aiController = null;
 
-async function init() {
+/**
+ * Initialize controller once
+ */
+function getController(db) {
+  if (!db) {
+    throw new Error("Database instance not provided to AI routes");
+  }
+
   if (!aiController) {
-    const db = await initDB();
     aiController = new AIController(db);
   }
+  return aiController;
 }
 
-async function chat(req, res) {
-  await init();
-  return aiController.chat(req, res);
+/**
+ * POST /api/ai/chat
+ */
+async function chat(req, res, db) {
+  try {
+    return getController(db).chat(req, res);
+  } catch (err) {
+    console.error("AI chat route error:", err);
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "AI service error" }));
+  }
 }
 
 module.exports = { chat };

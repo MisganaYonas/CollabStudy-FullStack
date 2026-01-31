@@ -1,7 +1,5 @@
 // src/routes/chat.routes.js
 const ChatController = require("../controllers/chat.controller");
-const MessageModel = require("../models/Message.models");
-const GroupModel = require("../models/Group.model");
 
 let chatController = null;
 
@@ -15,9 +13,7 @@ function getController(db) {
   }
 
   if (!chatController) {
-    const messageModel = new MessageModel(db);
-    const groupModel = new GroupModel(db);
-    chatController = new ChatController(messageModel, groupModel);
+    chatController = new ChatController(db);
   }
 
   return chatController;
