@@ -1,15 +1,24 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { sendAIChat } from "../api";
 import "../styles/ai.css";
 import "../styles/general.css";
 
 export default function AIChat() {
   const inputFieldRef = useRef(null);
   const chatContainerRef = useRef(null);
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUserId(JSON.parse(storedUser)._id);
+    }
+  }, []);
 
   function scrollToBottom() {
     const chatContainer = chatContainerRef.current;
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
   }
 
   function addMessage(text, sender = "user") {
@@ -31,28 +40,29 @@ export default function AIChat() {
     scrollToBottom();
   }
 
-  function getAIResponse(userMessage) {
-    if (userMessage.toLowerCase().includes("study")) {
-      return "I suggest reviewing your lecture notes and forming a study group.";
-    } else if (userMessage.toLowerCase().includes("group")) {
-      return "You can invite members from your class or study community";
-    } else if (userMessage.toLowerCase().includes("course")) {
-      return "I can provide information on various courses. Which subject are you interested in?";
-    } else if (userMessage.toLowerCase().includes("motivation")) {
-      return "Remember, consistency is key! Set small goals and reward yourself for achieving them.";
-    }
-    return "I'm here to help! Could you please provide more details about what you need assistance with?";
-  }
-
-  function sendMessage() {
+  async function sendMessage() {
     const text = inputFieldRef.current.value.trim();
     if (!text) return;
+
+    if (!userId) {
+      alert("Please login first.");
+      return;
+    }
+
     addMessage(text, "user");
     inputFieldRef.current.value = "";
-    setTimeout(() => {
-      const aiText = getAIResponse(text);
-      addMessage(aiText, "ai");
-    }, 800);
+
+    try {
+      const response = await sendAIChat({ userId, prompt: text });
+      // Assuming response is { response: "AI text" } or similar.
+      // Spec doesn't define output format.
+      // But usually it returns a message.
+      const aiResponse = response.data.response || response.data.message || JSON.stringify(response.data);
+      addMessage(aiResponse, "ai");
+    } catch (err) {
+      console.error("AI chat error", err);
+      addMessage("Sorry, I couldn't reach the server.", "ai");
+    }
   }
 
   useEffect(() => {
@@ -67,7 +77,7 @@ export default function AIChat() {
 
     inputField.addEventListener("keydown", handleKeyDown);
     return () => inputField.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [userId]); // Re-bind if user changes, though unlikely on this page without reload
 
   return (
     <div className="aipage-full">

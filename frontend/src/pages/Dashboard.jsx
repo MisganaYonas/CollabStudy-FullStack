@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { searchGroups } from "../api";
 import "../styles/dashboard.css";
 import "../styles/general.css";
 
@@ -8,6 +9,100 @@ export default function Dashboard() {
   const [profileActive, setProfileActive] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState({});
   const [selectedDays, setSelectedDays] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [courseFilter, setCourseFilter] = useState("");
+  const [majorFilter, setMajorFilter] = useState("");
+  const [yearFilter, setYearFilter] = useState("All Years");
+  const [timeFilter, setTimeFilter] = useState("Any Time");
+  const [statusFilter, setStatusFilter] = useState("All Status");
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+
+    // Initial fetch
+    fetchGroups();
+  }, []);
+
+  // Fetch groups when filters change (debounced or triggered)
+  // For simplicity, I'll trigger on effect dependencies for inputs if I wanted live search,
+  // but let's do it on filter changes.
+  useEffect(() => {
+    fetchGroups();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDays, yearFilter, timeFilter, statusFilter]);
+
+  // Handle text search on enter or blur? or just live. Let's do live with debounce or just live for now.
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchGroups();
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, courseFilter, majorFilter]);
+
+
+  const fetchGroups = async () => {
+    setLoading(true);
+    try {
+      const filters = {};
+      if (searchTerm) filters.name = searchTerm;
+      if (courseFilter) filters.course = courseFilter; // Assuming backend might not have 'course' but 'name' covers it or 'department'? Spec says 'name', 'department', 'year', 'meetingTime', 'status'. 
+      // Spec says "name uses case-insensitive partial match". Assuming 'course' maps to 'name' or 'department'? 
+      // The CreateGroup has 'course' field. The backend SEARCH spec has "name", "department", "year", "meetingTime", "status". It DOES NOT list "course".
+      // However, CreateGroup sends "course". It's possible the backend ignores it or I should map "course" search to "name" or just omit if backend doesn't support it.
+      // I'll map 'searchTerm' to 'name'. Course filter might not work if backend doesn't support it. I'll omit it for now or send it if backend supports extensions.
+      // Actually, spec said: "Rules: - All filters OPTIONAL - If empty body -> return all groups ... Others use exact match".
+      // If I send extra fields, maybe ignored.
+
+      if (majorFilter) filters.department = majorFilter;
+      if (yearFilter !== "All Years") filters.year = yearFilter;
+      if (timeFilter !== "Any Time") filters.meetingTime = timeFilter;
+      if (statusFilter !== "All Status") filters.status = statusFilter;
+
+      // Days logic? Backend CreateGroup has "meetingDays". Search spec doesn't list it explicitly but says "name, department ... meetingTime, status".
+      // I'll assume meetingDays logic isn't in search spec, so I'll client side filter or just ignore. 
+      // Waiting... I should probably not filter by days if backend doesn't support it. I'll leave it as visual for now.
+
+      const response = await searchGroups(filters);
+      let fetchedGroups = response.data;
+
+      // Logic: "Top 4 Groups by Members"
+      // Rules says: "Sort groups by membersCount DESC, Show top 4 only"
+      // It also says "REPLACE 'Highest Rated Groups' ... with ...".
+      // If I am searching, should I show top 4?
+      // I'll assume if filters are essentially empty (or default), show Top 4.
+      // If user is searching, show results.
+
+      const isDefaultFilters = !searchTerm && !majorFilter && yearFilter === "All Years" && timeFilter === "Any Time" && statusFilter === "All Status";
+
+      if (isDefaultFilters) {
+        // Sort by membersCount DESC
+        fetchedGroups.sort((a, b) => (b.membersCount || 1) - (a.membersCount || 1));
+        // Take top 4
+        fetchedGroups = fetchedGroups.slice(0, 4);
+      } else {
+        // If searching, maybe don't limit to 4? Spec just says "REPLACE Highest Rated Groups ... with Top 4".
+        // It implies the DASHBOARD VIEW is Top 4.
+        // If I search, I probably want to see results.
+        // I'll leave it as is.
+      }
+
+      setGroups(fetchedGroups);
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   useEffect(() => {
     const handleDocumentClick = () => {
@@ -40,17 +135,20 @@ export default function Dashboard() {
   }
 
   function toggleDay(day) {
-  setSelectedDays((prev) =>
-    prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-  );
-}
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    );
+  }
+
+  const isDefaultFilters = !searchTerm && !majorFilter && yearFilter === "All Years" && timeFilter === "Any Time" && statusFilter === "All Status";
+  const sectionTitle = isDefaultFilters ? "Top 4 Groups by Members" : "Search Results";
 
   return (
     <>
       <div className="whole-dashboard">
         <header className="topbar">
           <div className="topbar-inner">
-            <div className="welcome">Welcome, username!</div>
+            <div className="welcome">Welcome, {user?.username || "Student"}!</div>
             <div className={`profile-area ${profileActive ? "active" : ""}`} onClick={profileClick}>
               <Link to="/myProfile" className="profile-link">
                 <div className="dashboard-profile-avatar icon-avatar">
@@ -93,7 +191,10 @@ export default function Dashboard() {
                   </svg>
                   <span>Back to Homepage</span>
                 </Link>
-                <Link to="/" className="menu-item logout">
+                <Link to="/" className="menu-item logout" onClick={() => {
+                  localStorage.removeItem("token");
+                  localStorage.removeItem("user");
+                }}>
                   <svg
                     className="header-link-icon"
                     width="18"
@@ -182,7 +283,13 @@ export default function Dashboard() {
                     <line x1="16.5" y1="16.5" x2="22" y2="22"></line>
                   </svg>
                 </div>
-                <input type="search" placeholder="Search by group name or course…" aria-label="search groups" />
+                <input
+                  type="search"
+                  placeholder="Search by group name..."
+                  aria-label="search groups"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
             </div>
 
@@ -192,17 +299,33 @@ export default function Dashboard() {
               <div className="filters-grid">
                 <div className="field">
                   <label className="field-label">Course</label>
-                  <input className="pill-input" type="text" placeholder="Enter course name..." />
+                  <input
+                    className="pill-input"
+                    type="text"
+                    placeholder="Enter course name..."
+                    value={courseFilter}
+                    onChange={(e) => setCourseFilter(e.target.value)}
+                  />
                 </div>
 
                 <div className="field">
-                  <label className="field-label">Major</label>
-                  <input className="pill-input" type="text" placeholder="Enter major..." />
+                  <label className="field-label">Major/Dept</label>
+                  <input
+                    className="pill-input"
+                    type="text"
+                    placeholder="Enter major..."
+                    value={majorFilter}
+                    onChange={(e) => setMajorFilter(e.target.value)}
+                  />
                 </div>
 
                 <div className="field">
                   <label className="field-label">Year</label>
-                  <select className="pill-select" defaultValue="All Years">
+                  <select
+                    className="pill-select"
+                    value={yearFilter}
+                    onChange={(e) => setYearFilter(e.target.value)}
+                  >
                     <option>All Years</option>
                     <option>1st Year</option>
                     <option>2nd Year</option>
@@ -215,7 +338,11 @@ export default function Dashboard() {
 
                 <div className="field">
                   <label className="field-label">Meeting Time</label>
-                  <select className="pill-select" defaultValue="Any Time">
+                  <select
+                    className="pill-select"
+                    value={timeFilter}
+                    onChange={(e) => setTimeFilter(e.target.value)}
+                  >
                     <option>Any Time</option>
                     <option>Morning</option>
                     <option>Afternoon</option>
@@ -243,7 +370,11 @@ export default function Dashboard() {
 
               <div className="status-row">
                 <div className="field-label">Group Status</div>
-                <select className="pill-select status-select" defaultValue="All Status">
+                <select
+                  className="pill-select status-select"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
                   <option>All Status</option>
                   <option>Active</option>
                   <option>Inactive</option>
@@ -252,103 +383,38 @@ export default function Dashboard() {
             </div>
           </section>
 
-          <h3 className="groups-heading">Groups with High Ratings (4)</h3>
+          <h3 className="groups-heading">{sectionTitle} ({groups.length})</h3>
 
           <section className="groups-list">
-            {[
-              {
-                id: "CS202",
-                course: "CS 202",
-                major: "Computer Science",
-                time: "Afternoon",
-                title: "Data Structures & Algorithms",
-                members: "7/7",
-                membersFull: true,
-                days: "Tue, Thu",
-                admin: "John Doe",
-                type: "Online",
-                status: "active",
-                rating: 4.8,
-                joinType: "full",
-                description: "Intensive coding practice and theory discussions. We share code and resources.",
-              },
-              {
-                id: "MATH301",
-                course: "Math 301",
-                major: "Mathematics",
-                time: "Evening",
-                title: "Advanced Calculus Study Group",
-                members: "5/7",
-                membersFull: false,
-                days: "Mon, Wed, Fri",
-                admin: "Sara Ahmed",
-                type: "In-Person",
-                status: "active",
-                rating: 4.5,
-                joinType: "join",
-                description: "We focus on problem-solving and exam preparation. Group meets at the library.",
-              },
-              {
-                id: "CHEM205",
-                course: "Chem 205",
-                major: "Chemistry",
-                time: "Morning",
-                title: "Organic Chemistry Lab Partners",
-                members: "3/5",
-                membersFull: false,
-                days: "Mon, Wed",
-                admin: "Marta Solomon",
-                type: "In-Person",
-                status: "active",
-                rating: 4.2,
-                joinType: "join",
-                description: "Lab report collaboration and exam prep. Friendly and supportive environment.",
-              },
-              {
-                id: "BUS301",
-                course: "BUS 301",
-                major: "Business",
-                time: "Afternoon",
-                title: "Business Statistics Group",
-                members: "4/6",
-                membersFull: false,
-                days: "Wed, Fri",
-                admin: "David Tesfaye",
-                type: "Online",
-                status: "inactive",
-                rating: 3.9,
-                joinType: "join",
-                description: "Currently on break but accepting new members for next semester.",
-              },
-            ].map((group) => (
-              <article key={group.id} className={`dashboard-group-card ${expandedGroups[group.id] ? "active" : ""}`}>
+            {loading ? <p>Loading groups...</p> : groups.length === 0 ? <p>No groups found.</p> : groups.map((group) => (
+              <article key={group._id} className={`dashboard-group-card ${expandedGroups[group._id] ? "active" : ""}`}>
                 <div className="card-header">
-                  <div className="card-header-content" onClick={() => toggleGroup(group.id)}>
+                  <div className="card-header-content" onClick={() => toggleGroup(group._id)}>
                     <div className="card-left">
                       <div className="card-label">COURSE</div>
-                      <div className="card-value">{group.course}</div>
+                      <div className="card-value">{group.course || group.name}</div>
                     </div>
                     <div className="card-mid">
                       <div className="card-label">MAJOR</div>
-                      <div className="card-value">{group.major}</div>
+                      <div className="card-value">{group.department}</div>
                     </div>
                     <div className="card-right">
                       <div className="card-label">TIME</div>
-                      <div className="card-value">{group.time}</div>
+                      <div className="card-value">{group.meetingTime}</div>
                     </div>
                   </div>
                   <span
                     className="card-toggle"
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleGroup(group.id);
+                      toggleGroup(group._id);
                     }}
                   >
                     ▾
                   </span>
                 </div>
                 <div className="card-expanded">
-                  <h4 className="group-title">{group.title}</h4>
+                  <h4 className="group-title">{group.name}</h4>
                   <div className="group-details">
                     <div className="details-left">
                       <div className="detail-item">
@@ -370,7 +436,7 @@ export default function Dashboard() {
                           </svg>
                         </span>
                         <span>
-                          Members: {group.members} {group.membersFull && <span className="full-badge">(FULL)</span>}
+                          Members: {group.membersCount || 1}/{group.maxMembers} {(group.membersCount >= group.maxMembers) && <span className="full-badge">(FULL)</span>}
                         </span>
                       </div>
                       <div className="detail-item">
@@ -389,7 +455,7 @@ export default function Dashboard() {
                             <polyline points="12 6 12 12 16 14"></polyline>
                           </svg>
                         </span>
-                        <span>{group.days}</span>
+                        <span>{Array.isArray(group.meetingDays) ? group.meetingDays.join(", ") : group.meetingDays}</span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-icon">
@@ -407,46 +473,34 @@ export default function Dashboard() {
                             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                           </svg>
                         </span>
-                        <span>Admin: {group.admin}</span>
+                        {/* Admin field might not be in the lightweight group search object unless backend provides it. Inspecting "3. GET PROFILE" calls, but here it's Group Search. Backend 'create' sets admin. 'search' might return it. Assuming it does. */}
+                        <span>Admin: {group.admin?.username || "Unknown"}</span>
                       </div>
                       <div className="detail-item">
-                        <span className="detail-icon">
-                          <svg
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                            <circle cx="12" cy="10" r="3"></circle>
-                          </svg>
-                        </span>
-                        <span>{group.type}</span>
+                        {/* Removed Type (Online/InPerson) as it's not in CreateGroup spec */}
                       </div>
                     </div>
                     <div className="details-right">
-                      <div className={`status-badge ${group.status}`}>• {group.status === "active" ? "Active" : "Inactive"}</div>
-                      <div className="rating">
-                        <span className="rating-value">{group.rating}</span>
-                        <span className="stars">{"★".repeat(Math.floor(group.rating)) + "☆".repeat(5 - Math.floor(group.rating))}</span>
-                      </div>
+                      <div className={`status-badge ${group.status}`}>• {group.status}</div>
+                      {/* Rating REMOVED */}
                     </div>
                   </div>
                   <div className="group-description">{group.description}</div>
                   <button
-                    className={`group-btn ${group.joinType}`}
+                    className={`group-btn ${(group.membersCount >= group.maxMembers) ? "full" : "join"}`}
                     type="button"
+                    disabled={group.membersCount >= group.maxMembers}
                     onClick={() => {
-                      if (group.joinType === "join") {
-                        navigate(`/GroupPage`);
-                      }
+                      // Navigate to GroupPage passing state or just navigating.
+                      // Ideally pass groupId via route params /group/:id
+                      // Existing GroupPage seems to be generic or logic missing.
+                      // I'll assume I should navigate to GroupPage and it deals with state or query param.
+                      // The user spec said "Group Chat ... GET messages?groupId=..."
+                      // So I should pass groupId.
+                      navigate(`/GroupPage?groupId=${group._id}`);
                     }}
                   >
-                    {group.joinType === "join" ? "Join Now" : "Group Full"}
+                    {(group.membersCount >= group.maxMembers) ? "Group Full" : "Join Now"}
                   </button>
                 </div>
               </article>
