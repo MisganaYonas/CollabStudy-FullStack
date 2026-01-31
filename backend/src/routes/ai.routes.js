@@ -19,9 +19,9 @@ function getController(db) {
 /**
  * POST /api/ai/chat
  */
-async function chat(req, res, db) {
+async function chat(req, res, db, user) {
   try {
-    return getController(db).chat(req, res);
+    return getController(db).chat(req, res, user);
   } catch (err) {
     console.error("AI chat route error:", err);
     res.writeHead(500, { "Content-Type": "application/json" });

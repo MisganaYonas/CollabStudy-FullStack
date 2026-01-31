@@ -6,6 +6,12 @@ import Logo from "../images/Logo.png";
 
 function CreateGroup() {
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+
+  // Require authentication
+  React.useEffect(() => {
+    if (!token) navigate("/login");
+  }, [token, navigate]);
   const [currentStep, setCurrentStep] = useState(0);
   const [groupName, setGroupName] = useState("");
   const [department, setDepartment] = useState("");
@@ -111,37 +117,40 @@ function CreateGroup() {
         maxMembers: parseInt(maxMembers),
       };
 
+      console.log("Create group - Sending data:", groupData);
+      console.log("Create group - Data values:", {
+        name: groupName,
+        department,
+        year,
+        meetingTime: selectedTime,
+        meetingDays: selectedDays,
+        maxMembers: parseInt(maxMembers),
+      });
+
       const response = await createGroup(groupData);
-      const newGroupId = response.data._id || response.data.groupId || response.data.id; // handle whatever backend returns
-
-      // Handle invites if any (Best effort)
-      // Note: Invite endpoint needs 'groupId' and 'email'.
-      // If we have members, we try to invite them.
-      // Assuming Create Group returns the object with _id.
-
-      // Since I don't know the exact response structure of Create (usually returns the created doc), I'll try to use _id.
-      if (members.length > 0 && newGroupId) {
-        for (const email of members) {
-          try {
-            // We need to import inviteMember but I didn't import it yet. I'll add it.
-            // Or I'll just skip auto-invite for now to be safe/simple and strict.
-            // The prompt says "Frontend must match backend exactly". Orchestration is allowed.
-            // But let's stick to core functionality first. 
-            // I'll just create the group. The user can invite later via GroupPage.
-          } catch (err) {
-            console.error("Failed to invite", email);
-          }
-        }
+      console.log("Create group response:", response);
+      
+      // Backend returns: { message: "Group created", group: { _id: ..., ... } }
+      if (response.data?.message === "Group created" || response.status === 201) {
+        showMessage("Study group created successfully!", "green");
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
+      } else {
+        showMessage("Group created but unexpected response format", "red");
       }
-
-      showMessage("Study group created successfully!", "green");
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1500);
 
     } catch (error) {
       console.error("Create group error:", error);
-      showMessage(error.response?.data?.message || "Failed to create group", "red");
+      console.error("Error response:", error.response);
+      let errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || "Failed to create group";
+      
+      // If there are missing fields, show them
+      if (error.response?.data?.missingFields) {
+        errorMessage = `Missing required fields: ${error.response.data.missingFields.join(", ")}`;
+      }
+      
+      showMessage(errorMessage, "red");
     }
   };
 

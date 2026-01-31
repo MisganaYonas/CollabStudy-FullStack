@@ -26,17 +26,17 @@ export default function MyProfile() {
 
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://localhost/api/profile", {
+        const res = await fetch("http://localhost:5000/api/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
 
         if (res.ok) {
-          setUsername(data.username);
-          setEmail(data.email);
-          setMajor(data.major);
-          setYear(data.year);
-          setBio(data.bio);
+          setUsername(data.username || "");
+          setEmail(data.email || "");
+          setMajor(data.department || data.major || "");
+          setYear(data.year || "");
+          setBio(data.bio || "");
         } else {
           setStatusMessage(`${data.message || "Failed to load profile."}`);
         }
@@ -56,21 +56,29 @@ export default function MyProfile() {
      
       setStatusMessage("Saving...");
       try {
-        const res = await fetch("http://localhost/api/profile", {
+        const res = await fetch("http://localhost:5000/api/profile/edit", {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ username, email, major, year, bio }),
+          body: JSON.stringify({ username, email, department: major, year, bio }),
         });
 
         const data = await res.json();
 
         if (res.ok) {
           setStatusMessage("Profile updated successfully!");
+          // Update local state with the returned user data
+          if (data.user) {
+            setUsername(data.user.username || username);
+            setEmail(data.user.email || email);
+            setMajor(data.user.department || major);
+            setYear(data.user.year || year);
+            setBio(data.user.bio || bio);
+          }
         } else {
-          setStatusMessage(`${data.message || "Failed to update profile."}`);
+          setStatusMessage(`${data.error || data.message || "Failed to update profile."}`);
         }
       } catch (err) {
         console.error(err);
@@ -87,7 +95,7 @@ export default function MyProfile() {
     if (!confirmDelete) return;
 
     try {
-      const res = await fetch("http://localhost/api/profile", {
+      const res = await fetch("http://localhost:5000/api/user/delete", {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

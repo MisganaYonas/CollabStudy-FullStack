@@ -20,6 +20,8 @@ export default function GroupPage() {
   const [groupDetails, setGroupDetails] = useState(null);
   const [user, setUser] = useState(null);
 
+  const isAdmin = user && groupDetails && ((groupDetails.admin && (groupDetails.admin === user._id || groupDetails.admin === user.id)) || (groupDetails.admin?._id && (groupDetails.admin._id === user._id || groupDetails.admin._id === user.id)));
+
   useEffect(() => {
     if (messagesAreaRef.current) {
       messagesAreaRef.current.scrollTop = messagesAreaRef.current.scrollHeight;
@@ -28,7 +30,23 @@ export default function GroupPage() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) setUser(JSON.parse(storedUser));
+    const token = localStorage.getItem("token");
+    if (storedUser) {
+      const parsed = JSON.parse(storedUser);
+      // Ensure we have an _id for messaging; try to extract from JWT if missing
+      if ((!parsed._id && token)) {
+        try {
+          const payload = token.split(".")[1];
+          const decoded = JSON.parse(atob(payload));
+          parsed._id = decoded.id || decoded._id || decoded.userId || decoded.sub;
+        } catch (e) {
+          // ignore decode errors
+        }
+      }
+      setUser(parsed);
+      // keep localStorage in sync
+      localStorage.setItem("user", JSON.stringify(parsed));
+    }
 
     if (groupId) {
       fetchMessages();
@@ -57,7 +75,8 @@ export default function GroupPage() {
   const fetchMessages = async () => {
     try {
       const res = await getGroupMessages(groupId);
-      setMessages(res.data);
+      // Backend returns { messages: [...] }
+      setMessages(res.data?.messages || []);
     } catch (err) {
       console.error("Failed to load messages", err);
     }
@@ -271,9 +290,9 @@ export default function GroupPage() {
           </button>
         </footer>
 
-        <div className="grouppage-chatbot-container">
+          <div className="grouppage-chatbot-container">
           <div className="grouppage-chatbot-dot"></div>
-          <button className="grouppage-chatbot" aria-label="chatbot button" type="button" onClick={() => navigate("/AI")}>
+          <button className="grouppage-chatbot" aria-label="chatbot button" type="button" onClick={() => navigate("/ai")}>
             <svg className="grouppage-chatbot-icon" width="32" height="32" viewBox="0 0 24 24" fill="none">
               <rect x="6" y="8" width="12" height="10" rx="1.5" fill="white" />
               <rect x="8.5" y="10" width="2" height="2" fill="#2F6B66" />
@@ -284,30 +303,37 @@ export default function GroupPage() {
           </button>
         </div>
 
-        <aside className="grouppage-group-sidebar" id="groupSidebar" ref={groupSidebarRef}>
+          <aside className="grouppage-group-sidebar" id="groupSidebar" ref={groupSidebarRef}>
           <div className="grouppage-sidebar-header">
             <h2>Group Details</h2>
             <button className="grouppage-close-sidebar" onClick={closeSidebar}>&times;</button>
           </div>
 
           <div className="grouppage-sidebar-section">
-            <h3>Members (Placeholder)</h3>
-            {/* If groupDetails.members exists (and is populated), we could list them. 
-               The search endpoint returns what? 
-               Usually lightweight. 
-               We probably can't see members list here unless backend provides it.
-           */}
-            <p>Only admin sees full list (if implemented).</p>
+            <h3>Members</h3>
+            {isAdmin ? (
+              (Array.isArray(groupDetails?.members) && groupDetails.members.length > 0) ? (
+                <ul>
+                  {groupDetails.members.map((m, i) => (
+                    <li key={i}>{typeof m === 'string' ? m : (m.username || m._id || JSON.stringify(m))}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No member list available (stored as IDs).</p>
+              )
+            ) : (
+              <p>Only the group admin can see the full members list.</p>
+            )}
           </div>
 
           {groupDetails && (
             <div className="grouppage-sidebar-section">
-              <h3>Group Details</h3>
+              <h3>Group Details {isAdmin && <span style={{fontSize: '0.9em', color: '#2F6B66'}}>(You are admin)</span>}</h3>
               <p><strong>Status:</strong> <span className={`grouppage-status ${groupDetails.status}`}>{groupDetails.status}</span></p>
               <p><strong>Members:</strong> {groupDetails.membersCount}/{groupDetails.maxMembers}</p>
               <p><strong>Time:</strong> {groupDetails.meetingTime}</p>
               <p><strong>Days:</strong> {Array.isArray(groupDetails.meetingDays) ? groupDetails.meetingDays.join(", ") : groupDetails.meetingDays}</p>
-              <p><strong>Admin:</strong> {groupDetails.admin?.username || "Unknown"}</p>
+              <p><strong>Admin:</strong> {typeof groupDetails.admin === 'string' ? (groupDetails.admin === user?._id ? 'You (' + groupDetails.admin + ')' : groupDetails.admin) : (groupDetails.admin?.username || groupDetails.admin?._id || 'Unknown')}</p>
               <hr />
               <p>{groupDetails.description}</p>
             </div>

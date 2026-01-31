@@ -71,105 +71,120 @@ const server = http.createServer(async (req, res) => {
 
   /* ---------------- SIGNUP ---------------- */
   if (req.method === "POST" && pathname === "/api/signup") {
-    const {
-      username,
-      email,
-      password,
-      confirmPassword,
-      department,
-      year
-    } = await getBody(req);
+    try {
+      const {
+        username,
+        email,
+        password,
+        confirmPassword,
+        department,
+        year
+      } = await getBody(req);
 
-    if (
-      !username ||
-      !email ||
-      !password ||
-      !confirmPassword ||
-      !department ||
-      !year
-    ) {
-      return sendJSON(res, 400, { error: "All fields are required" });
+      if (
+        !username ||
+        !email ||
+        !password ||
+        !confirmPassword ||
+        !department ||
+        !year
+      ) {
+        return sendJSON(res, 400, { error: "All fields are required" });
+      }
+
+      if (!validateEmail(email)) {
+        return sendJSON(res, 400, { error: "Invalid AAU email format" });
+      }
+
+      if (password.length < 8) {
+        return sendJSON(res, 400, { error: "Password must be at least 8 characters" });
+      }
+
+      if (password !== confirmPassword) {
+        return sendJSON(res, 400, { error: "Passwords do not match" });
+      }
+
+      const users = dbInstance.collection("users");
+
+      const existingUser = await users.findOne({
+        $or: [{ email }, { username }]
+      });
+
+      if (existingUser) {
+        return sendJSON(res, 400, { error: "Username or email already exists" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      await users.insertOne({
+        username,
+        email,
+        password: hashedPassword,
+        department,
+        year,
+        createdAt: new Date()
+      });
+
+      return sendJSON(res, 201, { message: "Signup successful" });
+    } catch (err) {
+      console.error("Signup error:", err);
+      return sendJSON(res, 500, { error: "Server error during signup" });
     }
-
-    if (!validateEmail(email)) {
-      return sendJSON(res, 400, { error: "Invalid AAU email format" });
-    }
-
-    if (password.length < 8) {
-      return sendJSON(res, 400, { error: "Password must be at least 8 characters" });
-    }
-
-    if (password !== confirmPassword) {
-      return sendJSON(res, 400, { error: "Passwords do not match" });
-    }
-
-    const users = dbInstance.collection("users");
-
-    const existingUser = await users.findOne({
-      $or: [{ email }, { username }]
-    });
-
-    if (existingUser) {
-      return sendJSON(res, 400, { error: "Username or email already exists" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    await users.insertOne({
-      username,
-      email,
-      password: hashedPassword,
-      department,
-      year,
-      createdAt: new Date()
-    });
-
-    return sendJSON(res, 201, { message: "Signup successful" });
   }
 
   /* ---------------- LOGIN ---------------- */
   if (req.method === "POST" && pathname === "/api/login") {
-    const { email, password } = await getBody(req);
+    try {
+      const { email, password } = await getBody(req);
 
-    // 1️⃣ validate email/password exists
-    if (!email || !password) {
-      return sendJSON(res, 400, { error: "Email and password required" });
-    }
-
-    // 2️⃣ get user from DB
-    const users = dbInstance.collection("users");
-    const user = await users.findOne({ email });
-
-    if (!user) {
-      return sendJSON(res, 400, { error: "User not found" });
-    }
-
-    // 3️⃣ compare passwords
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return sendJSON(res, 400, { error: "Incorrect password" });
-    }
-
-    // ✅ 4️⃣ DEBUG: check if JWT_SECRET is loaded
-    console.log("JWT_SECRET:", process.env.JWT_SECRET);  // <--- put it here
-
-    // 5️⃣ create JWT token
-    const token = jwt.sign(
-      { id: user._id, email: user.email },
-      process.env.JWT_SECRET, // <-- must exist
-      { expiresIn: "1h" }
-    );
-
-    return sendJSON(res, 200, {
-      message: "Login successful",
-      token,
-      user: {
-        username: user.username,
-        email: user.email,
-        department: user.department,
-        year: user.year
+      // 1️⃣ validate email/password exists
+      if (!email || !password) {
+        return sendJSON(res, 400, { error: "Email and password required" });
       }
-    });
+
+      // 2️⃣ get user from DB
+      const users = dbInstance.collection("users");
+      const user = await users.findOne({ email });
+
+      if (!user) {
+        return sendJSON(res, 400, { error: "User not found" });
+      }
+
+      // 3️⃣ compare passwords
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) {
+        return sendJSON(res, 400, { error: "Incorrect password" });
+      }
+
+      // 4️⃣ Check if JWT_SECRET is loaded
+      if (!process.env.JWT_SECRET) {
+        console.error("JWT_SECRET is not set in environment variables");
+        return sendJSON(res, 500, { error: "Server configuration error" });
+      }
+
+      // 5️⃣ create JWT token
+      // Ensure user._id is converted to string for JWT
+      const userId = user._id.toString ? user._id.toString() : String(user._id);
+      const token = jwt.sign(
+        { id: userId, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+      );
+
+      return sendJSON(res, 200, {
+        message: "Login successful",
+        token,
+        user: {
+          username: user.username,
+          email: user.email,
+          department: user.department,
+          year: user.year
+        }
+      });
+    } catch (err) {
+      console.error("Login error:", err);
+      return sendJSON(res, 500, { error: "Server error during login" });
+    }
   }
 
   // ---------------- EDIT PROFILE ---------------- */
@@ -189,8 +204,17 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, 400, { error: "Invalid AAU email format" });
       }
 
-      const validYears = ["1st year", "2nd year", "3rd year", "4th year", "5th year", "Graduate"];
-      if (!validYears.includes(year)) {
+      // Normalize year to match database format (capitalize first letter of "Year")
+      let finalYear = year;
+      if (year && year.toLowerCase().includes("year")) {
+        const parts = year.split(" ");
+        if (parts.length === 2) {
+          finalYear = parts[0] + " Year"; // Capitalize "Year"
+        }
+      }
+      
+      const validYears = ["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Graduate"];
+      if (!validYears.some(y => y.toLowerCase() === finalYear.toLowerCase())) {
         return sendJSON(res, 400, { error: "Invalid year option" });
       }
 
@@ -207,7 +231,7 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, 400, { error: "Username or email already exists" });
       }
 
-      const updateData = { username, email, department, year };
+      const updateData = { username, email, department, year: finalYear };
       if (bio !== undefined) updateData.bio = bio;
 
       await users.updateOne(
@@ -239,15 +263,35 @@ const server = http.createServer(async (req, res) => {
     const user = authMiddleware(req, res);
     if (!user) return;
 
-    return sendJSON(res, 200, {
-      message: "Protected route accessed",
-      user
-    });
+    try {
+      // Fetch full user data from database
+      const users = dbInstance.collection("users");
+      const { ObjectId } = require("mongodb");
+      const userData = await users.findOne({ _id: new ObjectId(user.id) });
+
+      if (!userData) {
+        return sendJSON(res, 404, { error: "User not found" });
+      }
+
+      // Return user data (excluding password)
+      return sendJSON(res, 200, {
+        username: userData.username,
+        email: userData.email,
+        department: userData.department || "",
+        year: userData.year || "",
+        bio: userData.bio || ""
+      });
+    } catch (err) {
+      console.error("Profile fetch error:", err);
+      return sendJSON(res, 500, { error: "Server error while fetching profile" });
+    }
   }
 
   /* ---------------- AI CHAT ---------------- */
   if (req.method === "POST" && pathname === "/api/ai/chat") {
-    return aiRoutes.chat(req, res, dbInstance);
+    const user = authMiddleware(req, res);
+    if (!user) return; // stop if JWT invalid
+    return aiRoutes.chat(req, res, dbInstance, user);
   }
 
   /* ---------------- CHAT ---------------- */
@@ -264,7 +308,9 @@ const server = http.createServer(async (req, res) => {
   /* ---------------- GROUPS ---------------- */
   if (pathname.startsWith("/api/group")) {
     if (req.method === "POST" && pathname === "/api/group/create") {
-      return groupRoutes.createGroup(req, res, dbInstance);
+      const user = authMiddleware(req, res);
+      if (!user) return; // stop if JWT invalid
+      return groupRoutes.createGroup(req, res, dbInstance, user);
     }
 
     if (req.method === "GET" && pathname === "/api/group/get") {
@@ -272,7 +318,9 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "POST" && pathname === "/api/group/invite") {
-      return groupRoutes.inviteMember(req, res, dbInstance);
+      const user = authMiddleware(req, res);
+      if (!user) return; // stop if JWT invalid
+      return groupRoutes.inviteMember(req, res, dbInstance, user);
     }
 
     if (req.method === "POST" && pathname === "/api/group/search") {

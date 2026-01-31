@@ -23,9 +23,9 @@ function getController(db) {
 /**
  * POST /api/group/create
  */
-async function createGroup(req, res, db) {
+async function createGroup(req, res, db, user) {
   try {
-    return await getController(db).createGroup(req, res);
+    return await getController(db).createGroup(req, res, user);
   } catch (err) {
     console.error("Create group error:", err);
     res.writeHead(500, { "Content-Type": "application/json" });
@@ -36,9 +36,9 @@ async function createGroup(req, res, db) {
 /**
  * POST /api/group/invite
  */
-async function inviteMember(req, res, db) {
+async function inviteMember(req, res, db, user) {
   try {
-    return await getController(db).inviteMember(req, res);
+    return await getController(db).inviteMember(req, res, user);
   } catch (err) {
     console.error("Invite member error:", err);
     res.writeHead(500, { "Content-Type": "application/json" });

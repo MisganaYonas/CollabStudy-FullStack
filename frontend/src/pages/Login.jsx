@@ -30,7 +30,7 @@ function Login() {
     setMessage("");
 
     try {
-      const response = await fetch("http://localhost/api/login", {
+      const response = await fetch("http://localhost:5000/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -38,18 +38,18 @@ function Login() {
 
       const data = await response.json();
 
-      if (response.ok && data.success) {
+      if (response.ok && data.token) {
         localStorage.setItem("token", data.token); 
         localStorage.setItem("user", JSON.stringify(data.user));
 
-        setMessage("Login successful!");
+        setMessage(data.message || "Login successful!");
         setMessageType("success");
 
         setTimeout(() => {
           navigate("/dashboard");
         }, 500);
       } else {
-        setMessage(data.message || "Login failed.");
+        setMessage(data.error || data.message || "Login failed.");
         setMessageType("error");
       }
     } catch (err) {

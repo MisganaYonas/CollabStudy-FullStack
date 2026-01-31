@@ -6,17 +6,21 @@ class AIController {
     this.aiConversations = db.collection("ai_conversations");
   }
 
-  async chat(req, res) {
+  async chat(req, res, authenticatedUser) {
     try {
       const body = await this.getBody(req);
-      const { userId, message } = body;
+      const { message, prompt } = body; // Accept both 'message' and 'prompt' for compatibility
 
-      if (!userId || !message) {
+      const userMessage = message || prompt;
+      if (!userMessage) {
         res.writeHead(400, { "Content-Type": "application/json" });
         return res.end(
-          JSON.stringify({ error: "userId and message are required" })
+          JSON.stringify({ error: "message is required" })
         );
       }
+
+      // Get userId from authenticated user
+      const userId = authenticatedUser.id;
 
       // Validate User Exists
       const user = await this.users.findOne({ _id: new ObjectId(userId) });
@@ -90,13 +94,13 @@ class AIController {
 
       /* ---------------- EXACT MATCH ONLY ---------------- */
       const reply =
-        QA[message] ||
+        QA[userMessage] ||
         "I'm not sure about that. Please ask a CollabStudy-related question.";
 
       // Store in DB
       await this.aiConversations.insertOne({
         userId,
-        prompt: message,
+        prompt: userMessage,
         response: reply,
         createdAt: new Date()
       });

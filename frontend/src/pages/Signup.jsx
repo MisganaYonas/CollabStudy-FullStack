@@ -49,10 +49,10 @@ function Signup() {
       return;
     }
 
-    const payload = { username, email, password, department, year };
+    const payload = { username, email, password, confirmPassword, department, year };
 
     try {
-      const res = await fetch("http://localhost/api/signup", {
+      const res = await fetch("http://localhost:5000/api/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -61,7 +61,7 @@ function Signup() {
       const data = await res.json();
 
       if (res.ok) {
-        showSuccess("Account created successfully!");
+        showSuccess(data.message || "Account created successfully!");
 
        
         if (data.token) {
@@ -70,7 +70,7 @@ function Signup() {
 
         setTimeout(() => navigate("/dashboard"), 1200);
       } else {
-        showError(data.message || "Signup failed. Please try again.");
+        showError(data.error || data.message || "Signup failed. Please try again.");
       }
     } catch (err) {
       console.error(err);

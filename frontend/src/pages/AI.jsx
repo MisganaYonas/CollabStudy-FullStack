@@ -7,13 +7,19 @@ import "../styles/general.css";
 export default function AIChat() {
   const inputFieldRef = useRef(null);
   const chatContainerRef = useRef(null);
-  const [userId, setUserId] = useState(null);
+  // Removed userId state - authentication is handled via JWT token
+  const token = localStorage.getItem("token");
+
+  // ensure authenticated
+  useEffect(() => {
+    if (!token) {
+      window.location.href = "/login";
+    }
+  }, [token]);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUserId(JSON.parse(storedUser)._id);
-    }
+    // User is authenticated via JWT token, no need to get userId from localStorage
+    // The backend will get it from the token
   }, []);
 
   function scrollToBottom() {
@@ -44,20 +50,13 @@ export default function AIChat() {
     const text = inputFieldRef.current.value.trim();
     if (!text) return;
 
-    if (!userId) {
-      alert("Please login first.");
-      return;
-    }
-
     addMessage(text, "user");
     inputFieldRef.current.value = "";
 
     try {
-      const response = await sendAIChat({ userId, prompt: text });
-      // Assuming response is { response: "AI text" } or similar.
-      // Spec doesn't define output format.
-      // But usually it returns a message.
-      const aiResponse = response.data.response || response.data.message || JSON.stringify(response.data);
+      const response = await sendAIChat({ prompt: text });
+      // Backend returns { reply: "AI text" }
+      const aiResponse = response.data.reply || response.data.response || response.data.message || "Sorry, I couldn't process that.";
       addMessage(aiResponse, "ai");
     } catch (err) {
       console.error("AI chat error", err);
@@ -77,7 +76,7 @@ export default function AIChat() {
 
     inputField.addEventListener("keydown", handleKeyDown);
     return () => inputField.removeEventListener("keydown", handleKeyDown);
-  }, [userId]); // Re-bind if user changes, though unlikely on this page without reload
+  }, []); // No dependencies needed
 
   return (
     <div className="aipage-full">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { searchGroups } from "../api";
+import { searchGroups, getProfile } from "../api";
 import "../styles/dashboard.css";
 import "../styles/general.css";
 
@@ -26,6 +26,26 @@ export default function Dashboard() {
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
+
+    // Try to refresh profile from server (if token present) to ensure accurate info
+    (async () => {
+      try {
+        const res = await getProfile();
+        if (res?.data) {
+          const profile = res.data;
+          const profileObj = {
+            username: profile.username,
+            email: profile.email,
+            department: profile.department,
+            year: profile.year,
+          };
+          setUser(profileObj);
+          localStorage.setItem("user", JSON.stringify(profileObj));
+        }
+      } catch (err) {
+        // ignore - user may not be logged in
+      }
+    })();
 
     // Initial fetch
     fetchGroups();
@@ -72,7 +92,7 @@ export default function Dashboard() {
       // Waiting... I should probably not filter by days if backend doesn't support it. I'll leave it as visual for now.
 
       const response = await searchGroups(filters);
-      let fetchedGroups = response.data;
+      let fetchedGroups = response.data?.groups || response.data || [];
 
       // Logic: "Top 4 Groups by Members"
       // Rules says: "Sort groups by membersCount DESC, Show top 4 only"
@@ -98,6 +118,7 @@ export default function Dashboard() {
       setGroups(fetchedGroups);
     } catch (error) {
       console.error("Error fetching groups:", error);
+      setGroups([]); // Set empty array on error to prevent UI crash
     } finally {
       setLoading(false);
     }
@@ -124,7 +145,7 @@ export default function Dashboard() {
   }
 
   function createClick() {
-    navigate("/CreateGroup");
+    navigate("/createGroup");
   }
 
   function toggleGroup(groupId) {
@@ -386,7 +407,9 @@ export default function Dashboard() {
           <h3 className="groups-heading">{sectionTitle} ({groups.length})</h3>
 
           <section className="groups-list">
-            {loading ? <p>Loading groups...</p> : groups.length === 0 ? <p>No groups found.</p> : groups.map((group) => (
+            {loading ? <p>Loading groups...</p> : groups.length === 0 ? <p>No groups found.</p> : groups.map((group) => {
+              if (!group || !group._id) return null; // Skip invalid groups
+              return (
               <article key={group._id} className={`dashboard-group-card ${expandedGroups[group._id] ? "active" : ""}`}>
                 <div className="card-header">
                   <div className="card-header-content" onClick={() => toggleGroup(group._id)}>
@@ -396,11 +419,11 @@ export default function Dashboard() {
                     </div>
                     <div className="card-mid">
                       <div className="card-label">MAJOR</div>
-                      <div className="card-value">{group.department}</div>
+                      <div className="card-value">{group.department || "N/A"}</div>
                     </div>
                     <div className="card-right">
                       <div className="card-label">TIME</div>
-                      <div className="card-value">{group.meetingTime}</div>
+                      <div className="card-value">{group.meetingTime || "N/A"}</div>
                     </div>
                   </div>
                   <span
@@ -414,7 +437,7 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <div className="card-expanded">
-                  <h4 className="group-title">{group.name}</h4>
+                  <h4 className="group-title">{group.name || group.course || "Untitled Group"}</h4>
                   <div className="group-details">
                     <div className="details-left">
                       <div className="detail-item">
@@ -436,7 +459,7 @@ export default function Dashboard() {
                           </svg>
                         </span>
                         <span>
-                          Members: {group.membersCount || 1}/{group.maxMembers} {(group.membersCount >= group.maxMembers) && <span className="full-badge">(FULL)</span>}
+                          Members: {group.membersCount || 1}/{group.maxMembers || 10} {((group.membersCount || 0) >= (group.maxMembers || 10)) && <span className="full-badge">(FULL)</span>}
                         </span>
                       </div>
                       <div className="detail-item">
@@ -455,7 +478,7 @@ export default function Dashboard() {
                             <polyline points="12 6 12 12 16 14"></polyline>
                           </svg>
                         </span>
-                        <span>{Array.isArray(group.meetingDays) ? group.meetingDays.join(", ") : group.meetingDays}</span>
+                        <span>{Array.isArray(group.meetingDays) ? group.meetingDays.join(", ") : (group.meetingDays || "N/A")}</span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-icon">
@@ -481,15 +504,15 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="details-right">
-                      <div className={`status-badge ${group.status}`}>• {group.status}</div>
+                      <div className={`status-badge ${group.status || "Inactive"}`}>• {group.status || "Inactive"}</div>
                       {/* Rating REMOVED */}
                     </div>
                   </div>
-                  <div className="group-description">{group.description}</div>
+                  <div className="group-description">{group.description || ""}</div>
                   <button
-                    className={`group-btn ${(group.membersCount >= group.maxMembers) ? "full" : "join"}`}
+                    className={`group-btn ${((group.membersCount || 0) >= (group.maxMembers || 10)) ? "full" : "join"}`}
                     type="button"
-                    disabled={group.membersCount >= group.maxMembers}
+                    disabled={(group.membersCount || 0) >= (group.maxMembers || 10)}
                     onClick={() => {
                       // Navigate to GroupPage passing state or just navigating.
                       // Ideally pass groupId via route params /group/:id
@@ -497,20 +520,21 @@ export default function Dashboard() {
                       // I'll assume I should navigate to GroupPage and it deals with state or query param.
                       // The user spec said "Group Chat ... GET messages?groupId=..."
                       // So I should pass groupId.
-                      navigate(`/GroupPage?groupId=${group._id}`);
+                      navigate(`/groupPage?groupId=${group._id?.toString() || group._id}`);
                     }}
                   >
-                    {(group.membersCount >= group.maxMembers) ? "Group Full" : "Join Now"}
+                    {((group.membersCount || 0) >= (group.maxMembers || 10)) ? "Group Full" : "Join Now"}
                   </button>
                 </div>
               </article>
-            ))}
+            );
+            })}
           </section>
         </main>
 
         <div className="chatbot-container">
           <div className="chatbot-dot"></div>
-          <button className="chatbot" aria-label="chatbot button" type="button" onClick={() => navigate("/AI")}>
+          <button className="chatbot" aria-label="chatbot button" type="button" onClick={() => navigate("/ai")}>
             <svg className="chatbot-icon" width="32" height="32" viewBox="0 0 24 24" fill="none">
               <rect x="6" y="8" width="12" height="10" rx="1.5" fill="white" />
               <rect x="8.5" y="10" width="2" height="2" fill="#2F6B66" />
