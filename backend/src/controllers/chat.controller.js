@@ -5,6 +5,7 @@ class ChatController {
   constructor(db) {
     this.messages = db.collection("messages");
     this.groups = db.collection("groups");
+    this.users = db.collection("users");
   }
 
   /* ---------------- HELPERS ---------------- */
@@ -49,10 +50,22 @@ class ChatController {
         return this.sendJSON(res, 403, { error: "User is not a member of this group" });
       }
 
-      // Store Message
+      // Resolve sender's username if possible
+      let senderName = senderId;
+      try {
+        if (ObjectId.isValid(senderId)) {
+          const user = await this.users.findOne({ _id: new ObjectId(senderId) });
+          if (user) senderName = user.username || senderName;
+        }
+      } catch (e) {
+        // ignore and fallback to senderId
+      }
+
+      // Store Message (include senderName for frontend convenience)
       const newMessage = {
         groupId,
         senderId,
+        senderName,
         message,
         createdAt: new Date()
       };

@@ -1,0 +1,273 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                    COLLABSTUDY - DATA FLOW DIAGRAM                        ╗
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           USER SIGNUP FLOW                              │
+└─────────────────────────────────────────────────────────────────────────┘
+
+    ┌──────────────┐
+    │  React Form  │  User fills: username, email, password, department, year
+    │  Signup.jsx  │
+    └──────┬───────┘
+           │
+           │ 1. handleSubmit() called
+           │ 2. e.preventDefault() stops default form submission
+           │ 3. Validation (email format, password length, etc.)
+           │
+           ▼
+    ┌─────────────────────────────────────┐
+    │  fetch("POST /api/signup")          │
+    │  body: JSON.stringify(payload)      │
+    │  headers: Content-Type: application/json │
+    └──────┬───────────────────────────────┘
+           │
+           │ HTTP POST Request
+           │
+           ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                    CUSTOM NODE.JS SERVER (app.js)                        │
+│                                                                          │
+│  const server = http.createServer(async (req, res) => {                 │
+│    const pathname = new URL(req.url).pathname;                          │
+│                                                                          │
+│    if (req.method === "POST" && pathname === "/api/signup") {           │
+│      const body = await getBody(req);  // Manual parsing                │
+│      // Validate, hash password, save to DB                             │
+│    }                                                                     │
+│  });                                                                     │
+└──────┬───────────────────────────────────────────────────────────────────┘
+       │
+       │ 4. Manual routing (if statement checks method + pathname)
+       │ 5. getBody() parses request:
+       │    - req.on("data") collects chunks
+       │    - req.on("end") parses JSON
+       │ 6. Validation (required fields, email format, password length)
+       │ 7. bcrypt.hash() hashes password
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                         MONGODB DATABASE                                 │
+│                                                                          │
+│  users collection:                                                      │
+│  {                                                                       │
+│    _id: ObjectId("..."),                                                │
+│    username: "john",                                                     │
+│    email: "john@aau.edu.et",                                            │
+│    password: "$2b$10$hashed...",                                        │
+│    department: "CSE",                                                   │
+│    year: "3rd Year",                                                    │
+│    createdAt: ISODate("2024-01-01T...")                                 │
+│  }                                                                       │
+│                                                                          │
+│  await users.insertOne({ ... });                                        │
+└──────┬───────────────────────────────────────────────────────────────────┘
+       │
+       │ 8. Document inserted
+       │ 9. Returns insertedId
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                    RESPONSE CHAIN (Back to Frontend)                     │
+│                                                                          │
+│  sendJSON(res, 201, { message: "Signup successful" });                 │
+│                                                                          │
+│  res.writeHead(201, { "Content-Type": "application/json" });            │
+│  res.end(JSON.stringify({ message: "Signup successful" }));             │
+└──────┬───────────────────────────────────────────────────────────────────┘
+       │
+       │ HTTP 201 Response
+       │ JSON: { "message": "Signup successful" }
+       │
+       ▼
+    ┌─────────────────────────────────────┐
+    │  const data = await res.json();     │
+    │  if (res.ok) {                      │
+    │    showSuccess("Account created!");  │
+    │    navigate("/dashboard");          │
+    │  }                                  │
+    └──────┬──────────────────────────────┘
+           │
+           │ 10. React updates state
+           │ 11. UI re-renders
+           │ 12. User navigated to dashboard
+           │
+           ▼
+    ┌──────────────┐
+    │   Dashboard  │  User sees success message, redirected
+    │   Component  │
+    └──────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        GROUP CREATION FLOW                              │
+└─────────────────────────────────────────────────────────────────────────┘
+
+    ┌──────────────┐
+    │ CreateGroup  │  User fills: name, department, year, time, days
+    │   Component  │
+    └──────┬───────┘
+           │
+           │ 1. handleCreateGroup()
+           │ 2. Validation (all fields required)
+           │ 3. POST /api/group/create
+           │
+           ▼
+    ┌─────────────────────────────────────┐
+    │  fetch("POST /api/group/create")    │
+    │  Authorization: Bearer <JWT_TOKEN>   │
+    └──────┬───────────────────────────────┘
+           │
+           ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                    CUSTOM NODE.JS SERVER (app.js)                        │
+│                                                                          │
+│  if (req.method === "POST" && pathname === "/api/group/create") {       │
+│    const user = authMiddleware(req, res);  // Verify JWT                │
+│    if (!user) return;  // Unauthorized                                  │
+│    return groupRoutes.createGroup(req, res, db, user);                   │
+│  }                                                                       │
+└──────┬───────────────────────────────────────────────────────────────────┘
+       │
+       │ 4. JWT token verified
+       │ 5. User extracted from token
+       │ 6. Route to controller
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│              GROUP CONTROLLER (group.controller.js)                      │
+│                                                                          │
+│  async createGroup(req, res, user) {                                     │
+│    const body = await this.getBody(req);                                │
+│    const { name, department, year, meetingTime, meetingDays } = body;    │
+│    const adminId = user.id;  // From JWT                                │
+│                                                                          │
+│    // Validation                                                         │
+│    if (!name || !department || !year) {                                 │
+│      return this.sendJSON(res, 400, { error: "Missing fields" });       │
+│    }                                                                     │
+│                                                                          │
+│    // Call model                                                         │
+│    const group = await this.groupModel.createGroup({                    │
+│      name, department, year, meetingTime, meetingDays, adminId           │
+│    });                                                                   │
+│                                                                          │
+│    return this.sendJSON(res, 201, { message: "Group created", group });│
+│  }                                                                       │
+└──────┬───────────────────────────────────────────────────────────────────┘
+       │
+       │ 7. Business logic
+       │ 8. Validation
+       │ 9. Call model layer
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│              GROUP MODEL (Group.model.js)                                │
+│                                                                          │
+│  async createGroup({ name, department, year, adminId }) {               │
+│    const group = {                                                      │
+│      name, department, year,                                            │
+│      admin: adminId,                                                    │
+│      members: [adminId],                                                 │
+│      status: "Inactive",                                                │
+│      createdAt: new Date()                                              │
+│    };                                                                   │
+│                                                                          │
+│    const result = await this.collection.insertOne(group);               │
+│    return { _id: result.insertedId, ...group };                         │
+│  }                                                                       │
+└──────┬───────────────────────────────────────────────────────────────────┘
+       │
+       │ 10. Database operation
+       │ 11. Return created document
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                         MONGODB DATABASE                                 │
+│                                                                          │
+│  groups collection:                                                      │
+│  {                                                                       │
+│    _id: ObjectId("..."),                                                 │
+│    name: "Data Structures Study Group",                                  │
+│    department: "CSE",                                                    │
+│    year: "3rd Year",                                                     │
+│    admin: "userId123",                                                   │
+│    members: ["userId123"],                                               │
+│    status: "Inactive",                                                   │
+│    createdAt: ISODate("2024-01-01T...")                                 │
+│  }                                                                       │
+└──────┬───────────────────────────────────────────────────────────────────┘
+       │
+       │ 12. Document inserted
+       │ 13. Response chain back to frontend
+       │
+       ▼
+    ┌─────────────────────────────────────┐
+    │  Response: {                        │
+    │    message: "Group created",        │
+    │    group: { _id: "...", ... }       │
+    │  }                                  │
+    └──────┬──────────────────────────────┘
+           │
+           │ 14. React shows success
+           │ 15. Navigate to dashboard
+           │
+           ▼
+    ┌──────────────┐
+    │   Dashboard  │  New group appears in list
+    │   Component  │
+    └──────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    KEY ARCHITECTURE LAYERS                               │
+└─────────────────────────────────────────────────────────────────────────┘
+
+    ┌─────────────────┐
+    │   PRESENTATION   │  React Components (UI)
+    │      LAYER       │  - useState, useEffect
+    │                  │  - Event handlers
+    │                  │  - API calls (fetch/axios)
+    └────────┬──────────┘
+             │
+             │ HTTP Requests (JSON)
+             │
+    ┌────────▼──────────┐
+    │   APPLICATION     │  Custom Node.js Server
+    │      LAYER        │  - Manual routing
+    │                   │  - Request parsing
+    │                   │  - Response formatting
+    │                   │  - Authentication (JWT)
+    └────────┬──────────┘
+             │
+             │ Business Logic
+             │
+    ┌────────▼──────────┐
+    │   CONTROLLER      │  Controllers (group.controller.js)
+    │      LAYER        │  - Validation
+    │                   │  - Business rules
+    │                   │  - Error handling
+    └────────┬──────────┘
+             │
+             │ Data Operations
+             │
+    ┌────────▼──────────┐
+    │      MODEL        │  Models (Group.model.js)
+    │      LAYER        │  - Database queries
+    │                   │  - Data transformation
+    └────────┬──────────┘
+             │
+             │ MongoDB Operations
+             │
+    ┌────────▼──────────┐
+    │     DATABASE      │  MongoDB
+    │      LAYER        │  - Collections
+    │                   │  - Documents
+    │                   │  - CRUD operations
+    └───────────────────┘
+
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                         END OF DIAGRAM                                    ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+

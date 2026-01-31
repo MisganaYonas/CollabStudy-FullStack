@@ -39,8 +39,17 @@ function Login() {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        localStorage.setItem("token", data.token); 
-        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("token", data.token);
+        // Ensure local user object includes id/_id from token for later use
+        try {
+          const payload = data.token.split(".")[1];
+          const decoded = JSON.parse(atob(payload));
+          const id = decoded.id || decoded._id || decoded.userId || decoded.sub;
+          const userObj = { ...(data.user || {}), _id: id };
+          localStorage.setItem("user", JSON.stringify(userObj));
+        } catch (e) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
 
         setMessage(data.message || "Login successful!");
         setMessageType("success");

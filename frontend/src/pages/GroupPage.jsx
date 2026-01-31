@@ -251,12 +251,12 @@ export default function GroupPage() {
                   </svg>
                 </div>
                 <div className="grouppage-message-content">
-                  <div className="grouppage-message-sender">{msg.senderId === user?._id ? "You" : msg.senderId}</div>
+                  <div className="grouppage-message-sender">{String(msg.senderId) === String(user?._id) ? "You" : (msg.senderName || msg.senderId)}</div>
                   {/* Note: Logic to resolve senderId to name requires a user list or lookup, but backend message just returns what's stored. Spec doesn't clarify return type. Assuming simple storage. */}
                   <div className="grouppage-message-bubble">
                     <p>{msg.message}</p>
                   </div>
-                  <div className="grouppage-message-time">{new Date(msg.timestamp || Date.now()).toLocaleTimeString()}</div>
+                  <div className="grouppage-message-time">{new Date(msg.createdAt || msg.timestamp || Date.now()).toLocaleTimeString()}</div>
                 </div>
               </div>
             ))}
