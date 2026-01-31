@@ -2,6 +2,11 @@
 const { MongoClient } = require("mongodb");
 require("dotenv").config();
 
+if (!process.env.MONGO_URI) {
+  console.error("❌ FATAL ERROR: MONGO_URI is not defined.");
+  process.exit(1);
+}
+
 const client = new MongoClient(process.env.MONGO_URI);
 
 let db = null; // the DB instance

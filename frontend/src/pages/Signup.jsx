@@ -1,6 +1,6 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { signupUser } from "../api"; // use your api.js
 import "../styles/signup.css";
 import Logo from "../images/Logo.png";
 
@@ -15,6 +15,7 @@ function Signup() {
   const [year, setYear] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const showError = (msg) => {
     setMessage(msg);
@@ -29,6 +30,7 @@ function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Frontend validation
     if (!username || !email || !password || !confirmPassword || !department || !year) {
       showError("Please fill in all fields.");
       return;
@@ -49,32 +51,41 @@ function Signup() {
       return;
     }
 
-    const payload = { username, email, password, department, year };
+    setLoading(true);
+    setMessage("");
 
     try {
-      const res = await fetch("http://localhost/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      const { data } = await signupUser({
+        username,
+        email,
+        password,
+        confirmPassword,
+        department,
+        year
       });
 
-      const data = await res.json();
+      // Signup successful
+      showSuccess("Account created successfully!");
 
-      if (res.ok) {
-        showSuccess("Account created successfully!");
-
-       
-        if (data.token) {
-          localStorage.setItem("token", data.token);
-        }
-
-        setTimeout(() => navigate("/dashboard"), 1200);
-      } else {
-        showError(data.message || "Signup failed. Please try again.");
+      // Store token if returned
+      if (data.token) {
+        localStorage.setItem("token", data.token);
       }
+
+      // Optionally store user info
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
+
+      // Redirect to dashboard after short delay
+      setTimeout(() => navigate("/dashboard"), 1000);
+
     } catch (err) {
       console.error(err);
-      showError("Server error. Please try again later.");
+      // Backend returns { error: "..." } on failure
+      showError(err.response?.data?.error || "Signup failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -83,18 +94,7 @@ function Signup() {
       <div className="modal">
         <button className="close">
           <Link to="/" className="close-link">
-            <svg
-              className="close-sign"
-              width="23"
-              height="23"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
+            <svg className="close-sign" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M18 6L6 18"></path>
               <path d="M6 6l12 12"></path>
             </svg>
@@ -128,8 +128,7 @@ function Signup() {
             <input type="password" placeholder="Confirm your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
           </label>
 
-Praise, [1/31/2026 1:35 AM]
-<label className="labels">
+          <label className="labels">
             Major or Department
             <input type="text" placeholder="e.g., Computer Science" value={department} onChange={(e) => setDepartment(e.target.value)} required />
           </label>
@@ -149,7 +148,9 @@ Praise, [1/31/2026 1:35 AM]
 
           {message && <p className={`form-message ${messageType}`}>{message}</p>}
 
-          <button type="submit" className="create">Create Account</button>
+          <button type="submit" className="create" disabled={loading}>
+            {loading ? "Creating Account..." : "Create Account"}
+          </button>
         </form>
 
         <div className="or-line">

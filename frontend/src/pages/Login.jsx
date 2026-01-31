@@ -1,8 +1,8 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { loginUser } from "../api"; // use your api.js
 import "../styles/login.css"; 
-import Logo from "../images/Logo.png"; 
+import Logo from "../images/Logo.png";
 
 function Login() {
   const navigate = useNavigate();
@@ -15,6 +15,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Frontend validation
     if (!email || !password) {
       setMessage("Please fill in all fields.");
       setMessageType("error");
@@ -30,31 +31,22 @@ function Login() {
     setMessage("");
 
     try {
-      const response = await fetch("http://localhost/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      // Use axios api.js instance
+      const { data } = await loginUser({ email, password });
 
-      const data = await response.json();
+      // Store JWT token and user info
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-      if (response.ok && data.success) {
-        localStorage.setItem("token", data.token); 
-        localStorage.setItem("user", JSON.stringify(data.user));
+      setMessage("Login successful!");
+      setMessageType("success");
 
-        setMessage("Login successful!");
-        setMessageType("success");
-
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 500);
-      } else {
-        setMessage(data.message || "Login failed.");
-        setMessageType("error");
-      }
+      // Redirect to dashboard
+      setTimeout(() => navigate("/dashboard"), 500);
     } catch (err) {
       console.error(err);
-      setMessage("Server error. Please try again later.");
+      // Backend returns { error: "..." } on failure
+      setMessage(err.response?.data?.error || "Login failed");
       setMessageType("error");
     } finally {
       setLoading(false);
@@ -66,18 +58,7 @@ function Login() {
       <article className="login-card" role="region" aria-label="login form">
 
         <Link to="/" className="close-btn" aria-label="Close">
-          <svg
-            className="close-sign"
-            width="23"
-            height="23"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
+          <svg className="close-sign" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M18 6L6 18"></path>
             <path d="M6 6l12 12"></path>
           </svg>
@@ -111,8 +92,7 @@ function Login() {
             </div>
           </div>
 
-Praise, [1/31/2026 1:34 AM]
-<div className="input-group">
+          <div className="input-group">
             <label htmlFor="password">Password</label>
             <div className="input-inner">
               <svg className="icon icon-lock" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">

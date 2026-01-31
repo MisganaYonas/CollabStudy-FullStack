@@ -25,73 +25,34 @@ class AIController {
         return res.end(JSON.stringify({ error: "User not found" }));
       }
 
-      /* ---------------- MOCK QUESTIONS & ANSWERS ---------------- */
-      const QA = {
-        "How do I create a group?":
-          "To create a group, go to Groups and click on 'Create Group'. Enter a name and add members.",
+      /* ---------------- OPENAI INTEGRATION ---------------- */
+      let reply = "I'm not sure about that. Please ask a CollabStudy-related question.";
 
-        "How can I create a group?":
-          "You can create a group by clicking the 'Create Group' button and adding members.",
+      if (process.env.OPENAI_API_KEY) {
+        try {
+          const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: "gpt-3.5-turbo",
+              messages: [{ role: "user", content: message }]
+            })
+          });
 
-        "I want to make a group":
-          "To make a group, open the Groups section and choose 'Create Group'.",
-
-        "How do I add members to a group?":
-          "Open your group, click 'Add Member', and select the user you want to add.",
-
-        "How can I invite someone to my group?":
-          "Go to the group and use the 'Add Member' option to invite users.",
-
-        "How do I remove a member?":
-          "Open the group, select the member, and click 'Remove Member'.",
-
-        "How do I send a message?":
-          "Open the group chat, type your message, and press send.",
-
-        "How do I see messages?":
-          "You can see messages inside the group chat.",
-
-        "Can I see old messages?":
-          "Yes, all previous messages are saved in the group chat.",
-
-        "What is CollabStudy?":
-          "CollabStudy is a platform for students to create groups, chat, and collaborate.",
-
-        "How do I join a group?":
-          "You can join a group by clicking the 'Join Group' button.",
-
-        "Can I leave a group?":
-          "Yes, open the group and click 'Leave Group'.",
-
-        "How do I delete a group?":
-          "Only the group admin can delete a group from group settings.",
-
-        "Can I search for groups?":
-          "Yes, use the search feature to find groups by name.",
-
-        "How do I sign up?":
-          "Sign up using your institutional email and name.",
-
-        "How do I log in?":
-          "Enter your email and password on the login page.",
-
-        "Can I change my name?":
-          "Yes, you can change your name in profile settings.",
-
-        "Is private chat available?":
-          "Currently, only group chat is supported.",
-
-        "Can I add multiple members at once?":
-          "Yes, you can add multiple members when creating or editing a group.",
-
-        "Can I use emojis in chat?":
-          "No, emojis are not supported in chat messages."
-      };
-
-      /* ---------------- EXACT MATCH ONLY ---------------- */
-      const reply =
-        QA[message] ||
-        "I'm not sure about that. Please ask a CollabStudy-related question.";
+          const data = await openAIResponse.json();
+          if (data.choices && data.choices.length > 0) {
+            reply = data.choices[0].message.content;
+          }
+        } catch (openaiErr) {
+          console.error("OpenAI API error:", openaiErr);
+          reply = "AI service temporarily unavailable.";
+        }
+      } else {
+        console.warn("OPENAI_API_KEY not found, using fallback.");
+      }
 
       // Store in DB
       await this.aiConversations.insertOne({
@@ -104,7 +65,7 @@ class AIController {
       res.writeHead(200, { "Content-Type": "application/json" });
       return res.end(JSON.stringify({ reply }));
     } catch (err) {
-      console.error("Mock AI error:", err);
+      console.error("AI service error:", err);
       res.writeHead(500, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "AI service error" }));
     }

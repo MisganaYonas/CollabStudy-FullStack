@@ -102,6 +102,12 @@ function CreateGroup() {
     }
 
     try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user || !user._id) {
+        showMessage("You must be logged in to create a group.", "red");
+        return;
+      }
+
       const groupData = {
         name: groupName,
         department,
@@ -109,6 +115,7 @@ function CreateGroup() {
         meetingTime: selectedTime,
         meetingDays: selectedDays,
         maxMembers: parseInt(maxMembers),
+        adminId: user._id
       };
 
       const response = await createGroup(groupData);

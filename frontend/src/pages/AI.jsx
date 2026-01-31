@@ -57,7 +57,7 @@ export default function AIChat() {
       // Assuming response is { response: "AI text" } or similar.
       // Spec doesn't define output format.
       // But usually it returns a message.
-      const aiResponse = response.data.response || response.data.message || JSON.stringify(response.data);
+      const aiResponse = response.data.reply || response.data.response || response.data.message || JSON.stringify(response.data);
       addMessage(aiResponse, "ai");
     } catch (err) {
       console.error("AI chat error", err);
