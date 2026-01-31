@@ -54,6 +54,8 @@ let dbInstance = null;
 
 /* ---------------- HTTP SERVER ---------------- */
 const server = http.createServer(async (req, res) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  
   if (enableCORS(req, res)) return;
 
   if (!dbInstance) {
@@ -158,8 +160,9 @@ const server = http.createServer(async (req, res) => {
 
       if (!validateEmail(email)) return sendJSON(res, 400, { error: "Invalid AAU email format" });
 
-      const validYears = ["1st year", "2nd year", "3rd year", "4th year", "5th year", "Graduate"];
-      if (!validYears.includes(year)) return sendJSON(res, 400, { error: "Invalid year option" });
+      const validYears = ["1st year", "2nd year", "3rd year", "4th year", "5th year", "graduate"];
+      const normalizedYear = year.toLowerCase();
+      if (!validYears.includes(normalizedYear)) return sendJSON(res, 400, { error: "Invalid year option" });
 
       const { ObjectId } = require("mongodb");
       const users = dbInstance.collection("users");
@@ -210,32 +213,52 @@ const server = http.createServer(async (req, res) => {
 
   /* ---------------- AI CHAT ---------------- */
   if (req.method === "POST" && pathname === "/api/ai/chat") {
-    return aiRoutes.chat(req, res, dbInstance);
+    const userDecoded = authMiddleware(req, res);
+    if (!userDecoded) return;
+    
+    return aiRoutes.chat(req, res, dbInstance, userDecoded);
   }
 
   /* ---------------- CHAT ---------------- */
   if (pathname.startsWith("/api/chat")) {
+    const userDecoded = authMiddleware(req, res);
+    if (!userDecoded) return;
+    
     if (req.method === "GET" && pathname === "/api/chat/messages") {
-      return chatRoutes.getMessages(req, res, dbInstance);
+      return chatRoutes.getMessages(req, res, dbInstance, userDecoded);
     }
     if (req.method === "POST" && pathname === "/api/chat/send") {
-      return chatRoutes.sendMessage(req, res, dbInstance);
+      return chatRoutes.sendMessage(req, res, dbInstance, userDecoded);
     }
   }
 
   /* ---------------- GROUPS ---------------- */
   if (pathname.startsWith("/api/group")) {
+    console.log("Group route hit:", req.method, pathname);
+    
+    const userDecoded = authMiddleware(req, res);
+    if (!userDecoded) {
+      console.log("Auth middleware failed");
+      return;
+    }
+    
+    console.log("Auth successful, user:", userDecoded);
+    
     if (req.method === "POST" && pathname === "/api/group/create") {
-      return groupRoutes.createGroup(req, res, dbInstance);
+      console.log("Calling createGroup route");
+      return groupRoutes.createGroup(req, res, dbInstance, userDecoded);
+    }
+    if (req.method === "POST" && pathname === "/api/group/join") {
+      return groupRoutes.joinGroup(req, res, dbInstance, userDecoded);
     }
     if (req.method === "GET" && pathname === "/api/group/get") {
-      return groupRoutes.getGroup(req, res, dbInstance);
+      return groupRoutes.getGroup(req, res, dbInstance, userDecoded);
     }
     if (req.method === "POST" && pathname === "/api/group/invite") {
-      return groupRoutes.inviteMember(req, res, dbInstance);
+      return groupRoutes.inviteMember(req, res, dbInstance, userDecoded);
     }
     if (req.method === "POST" && pathname === "/api/group/search") {
-      return groupRoutes.searchGroups(req, res, dbInstance);
+      return groupRoutes.searchGroups(req, res, dbInstance, userDecoded);
     }
   }
 

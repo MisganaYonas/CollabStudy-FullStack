@@ -22,13 +22,38 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const loadUserData = () => {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    };
+
+    // Load initial user data
+    loadUserData();
+
+    // Listen for storage changes (when user updates profile)
+    const handleStorageChange = (e) => {
+      if (e.key === 'user') {
+        loadUserData();
+      }
+    };
+
+    // Listen for custom event when profile is updated
+    const handleProfileUpdate = () => {
+      loadUserData();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('profileUpdated', handleProfileUpdate);
 
     // Initial fetch
     fetchGroups();
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
   }, []);
 
   // Fetch groups when filters change (debounced or triggered)
@@ -72,7 +97,12 @@ export default function Dashboard() {
       // Waiting... I should probably not filter by days if backend doesn't support it. I'll leave it as visual for now.
 
       const response = await searchGroups(filters);
-      let fetchedGroups = response.data;
+      let fetchedGroups = response.data?.groups || response.data || [];
+
+      // Ensure it's an array
+      if (!Array.isArray(fetchedGroups)) {
+        fetchedGroups = [];
+      }
 
       // Logic: "Top 4 Groups by Members"
       // Rules says: "Sort groups by membersCount DESC, Show top 4 only"
@@ -85,7 +115,7 @@ export default function Dashboard() {
 
       if (isDefaultFilters) {
         // Sort by membersCount DESC
-        fetchedGroups.sort((a, b) => (b.membersCount || 1) - (a.membersCount || 1));
+        fetchedGroups?.sort((a, b) => (b.membersCount || 1) - (a.membersCount || 1));
         // Take top 4
         fetchedGroups = fetchedGroups.slice(0, 4);
       } else {

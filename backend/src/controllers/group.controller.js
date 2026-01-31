@@ -30,32 +30,33 @@ class GroupController {
   }
 
   /* ---------------- CREATE GROUP ---------------- */
-  async createGroup(req, res) {
+  async createGroup(req, res, userDecoded) {
     try {
       const {
         name, department, year, meetingTime, meetingDays,
-        maxMembers, adminId // Renamed membersCount to maxMembers for clarity
+        maxMembers, membersCount // Accept both formats
       } = await this.getBody(req);
 
-      // Validate required fields. Initial membersCount is fixed at 1 (adminId).
-      if (!name || !adminId || !department || !year) {
+      // Use authenticated user ID as admin
+      const adminId = userDecoded.id;
+
+      // Validate required fields
+      if (!name || !department || !year) {
         return this.sendJSON(res, 400, { error: "Missing required fields" });
       }
 
-      // Validate maxMembers if provided, otherwise default to 10 in model
-      if (maxMembers && maxMembers > 10) {
-        return this.sendJSON(res, 400, { error: "Max members allowed is 10" });
-      }
-      if (maxMembers && maxMembers < 1) {
-        return this.sendJSON(res, 400, { error: "Min members allowed is 1" });
-      }
+      // Use membersCount as maxMembers if provided, otherwise use maxMembers or default to 10
+      const finalMaxMembers = membersCount || maxMembers || 10;
 
       // Group starts with members = [adminId], status = "Inactive" (handled by model)
-      // We ignore any 'members' array passed in request body for creation.
       const group = await this.groupModel.createGroup({
-        name, department, year, meetingTime, meetingDays,
-        maxMembers, // Pass maxMembers (optional, defaults to 10 in model)
-        adminId // adminId will be the initial member
+        name, 
+        department, 
+        year, 
+        meetingTime, 
+        meetingDays,
+        maxMembers: finalMaxMembers,
+        adminId // adminId from JWT token
       });
 
       return this.sendJSON(res, 201, { message: "Group created", group });
@@ -66,7 +67,7 @@ class GroupController {
   }
 
   /* ---------------- INVITE MEMBER ---------------- */
-  async inviteMember(req, res) {
+  async inviteMember(req, res, userDecoded) {
     try {
       const { groupId, email } = await this.getBody(req);
 
@@ -117,7 +118,7 @@ class GroupController {
   }
 
   /* ---------------- SEARCH GROUPS ---------------- */
-  async searchGroups(req, res) {
+  async searchGroups(req, res, userDecoded) {
     try {
       const filters = await this.getBody(req);
       const groups = await this.groupModel.searchGroups(filters);
@@ -128,8 +129,48 @@ class GroupController {
     }
   }
 
-  /* ---------------- GET GROUP ---------------- */
-  async getGroup(req, res) {
+  /* ---------------- JOIN GROUP ---------------- */
+  async joinGroup(req, res, userDecoded) {
+    try {
+      const { groupId } = await this.getBody(req);
+      const userId = userDecoded.id;
+
+      if (!groupId) {
+        return this.sendJSON(res, 400, { error: "groupId is required" });
+      }
+
+      // Find Group
+      const group = await this.groupModel.getGroupById(groupId);
+      if (!group) {
+        return this.sendJSON(res, 404, { error: "Group not found" });
+      }
+
+      // Check if already a member
+      const isMember = group.members.some(m => m.toString() === userId);
+      if (isMember) {
+        return this.sendJSON(res, 400, { error: "User is already a member" });
+      }
+
+      // Check max members
+      if (group.members.length >= group.maxMembers) {
+        return this.sendJSON(res, 400, { error: "Group is full" });
+      }
+
+      // Add user to group
+      await this.groupModel.addMember(groupId, userId);
+
+      // Update status if needed
+      if (group.members.length + 1 > 1 && group.status !== "Active") {
+        await this.groupModel.updateStatus(groupId, "Active");
+      }
+
+      return this.sendJSON(res, 200, { message: "Successfully joined group" });
+    } catch (error) {
+      console.error("Join group error:", error);
+      return this.sendJSON(res, 500, { error: "Failed to join group", details: error.message });
+    }
+  }
+  async getGroup(req, res, userDecoded) {
     try {
       const url = new URL(req.url, `http://${req.headers.host}`);
       const groupId = url.searchParams.get("groupId");

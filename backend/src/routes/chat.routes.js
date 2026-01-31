@@ -22,9 +22,9 @@ function getController(db) {
 /**
  * GET /api/chat/messages?groupId=...
  */
-async function getMessages(req, res, db) {
+async function getMessages(req, res, db, userDecoded) {
   try {
-    return await getController(db).getMessages(req, res);
+    return await getController(db).getMessages(req, res, userDecoded);
   } catch (err) {
     console.error("Chat getMessages error:", err);
     res.writeHead(500, { "Content-Type": "application/json" });
@@ -35,9 +35,9 @@ async function getMessages(req, res, db) {
 /**
  * POST /api/chat/send
  */
-async function sendMessage(req, res, db) {
+async function sendMessage(req, res, db, userDecoded) {
   try {
-    return await getController(db).sendMessage(req, res);
+    return await getController(db).sendMessage(req, res, userDecoded);
   } catch (err) {
     console.error("Chat sendMessage error:", err);
     res.writeHead(500, { "Content-Type": "application/json" });

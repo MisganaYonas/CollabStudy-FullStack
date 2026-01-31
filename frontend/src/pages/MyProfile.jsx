@@ -67,6 +67,12 @@ export default function MyProfile() {
         if (res.ok) {
           setStatusMessage("Profile updated successfully!");
           setBio(data.user.bio || "No bio added yet."); // fallback
+          
+          // Update localStorage with new user data
+          localStorage.setItem('user', JSON.stringify(data.user));
+          
+          // Dispatch custom event to notify other components
+          window.dispatchEvent(new CustomEvent('profileUpdated'));
         } else {
           setStatusMessage(data.error || "Failed to update profile.");
         }

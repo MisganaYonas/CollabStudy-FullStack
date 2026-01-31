@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { getGroupMessages, sendGroupMessage, searchGroups } from "../api";
+import { getGroupMessages, sendGroupMessage, searchGroups, joinGroup } from "../api";
 import "../styles/groupPage.css";
 import "../styles/general.css";
 
@@ -31,23 +31,31 @@ export default function GroupPage() {
     if (storedUser) setUser(JSON.parse(storedUser));
 
     if (groupId) {
+      joinGroupAutomatically();
       fetchMessages();
-      fetchGroupInfo(); // Since we don't have getGroupById, maybe we search with ID? Or just display generic info.
-      // Actually, searchGroups returned the list. If I reload, I need to fetch it.
-      // Backend spec "9. SEARCH GROUPS" is strict.
-      // But maybe I can search by name if I knew it? Or maybe the backend supports ID search?
-      // Spec: "If empty body -> return all groups".
-      // I can fetch all and find by ID. (Inefficient but matches spec).
-
+      fetchGroupInfo();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId]);
+
+  const joinGroupAutomatically = async () => {
+    try {
+      await joinGroup(groupId);
+      console.log("Successfully joined group");
+    } catch (err) {
+      // Ignore error if already a member
+      if (err.response?.status !== 400) {
+        console.error("Failed to join group:", err);
+      }
+    }
+  };
 
   const fetchGroupInfo = async () => {
     try {
       // Inefficient fetch all to find one because no getById endpoint specified
       const res = await searchGroups({});
-      const found = res.data.find(g => g._id === groupId || g.id === groupId);
+      const groups = res.data?.groups || res.data || [];
+      const found = Array.isArray(groups) ? groups.find(g => g._id === groupId || g.id === groupId) : null;
       if (found) setGroupDetails(found);
     } catch (err) {
       console.error("Failed to load group info", err);
@@ -57,9 +65,12 @@ export default function GroupPage() {
   const fetchMessages = async () => {
     try {
       const res = await getGroupMessages(groupId);
-      setMessages(res.data);
+      // Ensure messages is always an array
+      const messagesData = res.data?.messages || res.data || [];
+      setMessages(Array.isArray(messagesData) ? messagesData : []);
     } catch (err) {
       console.error("Failed to load messages", err);
+      setMessages([]); // Set empty array on error
     }
   };
 
@@ -106,7 +117,8 @@ export default function GroupPage() {
     const text = messageInputRef.current.value.trim();
     if (text === "") return;
 
-    if (!user || !user._id) {
+    const token = localStorage.getItem("token");
+    if (!token) {
       alert("You must be logged in.");
       return;
     }
@@ -114,8 +126,8 @@ export default function GroupPage() {
     try {
       await sendGroupMessage({
         groupId,
-        senderId: user._id, // User._id from login response
         message: text
+        // senderId will be extracted from JWT token on backend
       });
       messageInputRef.current.value = "";
       fetchMessages(); // Refresh messages
@@ -232,7 +244,7 @@ export default function GroupPage() {
                   </svg>
                 </div>
                 <div className="grouppage-message-content">
-                  <div className="grouppage-message-sender">{msg.senderId === user?._id ? "You" : msg.senderId}</div>
+                  <div className="grouppage-message-sender">{msg.senderName === user?.username ? "You" : msg.senderName}</div>
                   {/* Note: Logic to resolve senderId to name requires a user list or lookup, but backend message just returns what's stored. Spec doesn't clarify return type. Assuming simple storage. */}
                   <div className="grouppage-message-bubble">
                     <p>{msg.message}</p>

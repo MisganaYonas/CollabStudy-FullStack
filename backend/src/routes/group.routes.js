@@ -23,9 +23,10 @@ function getController(db) {
 /**
  * POST /api/group/create
  */
-async function createGroup(req, res, db) {
+async function createGroup(req, res, db, userDecoded) {
   try {
-    return await getController(db).createGroup(req, res);
+    return await getController(db).createGroup(req, res, userDecoded);
+    console.log("Group created successfully",req.body);   
   } catch (err) {
     console.error("Create group error:", err);
     res.writeHead(500, { "Content-Type": "application/json" });
@@ -36,9 +37,9 @@ async function createGroup(req, res, db) {
 /**
  * POST /api/group/invite
  */
-async function inviteMember(req, res, db) {
+async function inviteMember(req, res, db, userDecoded) {
   try {
-    return await getController(db).inviteMember(req, res);
+    return await getController(db).inviteMember(req, res, userDecoded);
   } catch (err) {
     console.error("Invite member error:", err);
     res.writeHead(500, { "Content-Type": "application/json" });
@@ -49,9 +50,9 @@ async function inviteMember(req, res, db) {
 /**
  * POST /api/group/search
  */
-async function searchGroups(req, res, db) {
+async function searchGroups(req, res, db, userDecoded) {
   try {
-    return await getController(db).searchGroups(req, res);
+    return await getController(db).searchGroups(req, res, userDecoded);
   } catch (err) {
     console.error("Search groups error:", err);
     res.writeHead(500, { "Content-Type": "application/json" });
@@ -62,13 +63,26 @@ async function searchGroups(req, res, db) {
 /**
  * GET /api/group/get?groupId=...
  */
-async function getGroup(req, res, db) {
+async function getGroup(req, res, db, userDecoded) {
   try {
-    return await getController(db).getGroup(req, res);
+    return await getController(db).getGroup(req, res, userDecoded);
   } catch (err) {
     console.error("Get group error:", err);
     res.writeHead(500, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Failed to get group" }));
+  }
+}
+
+/**
+ * POST /api/group/join
+ */
+async function joinGroup(req, res, db, userDecoded) {
+  try {
+    return await getController(db).joinGroup(req, res, userDecoded);
+  } catch (err) {
+    console.error("Join group error:", err);
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Failed to join group" }));
   }
 }
 
@@ -77,6 +91,7 @@ module.exports = {
   inviteMember,
   searchGroups,
   getGroup,
+  joinGroup,
 };
 
 

@@ -27,6 +27,7 @@ export const getProfile = () => api.get('/profile');
 export const updateProfile = (data) => api.put('/profile/edit', data);
 export const deleteAccount = () => api.delete('/user/delete');
 export const createGroup = (groupData) => api.post('/group/create', groupData);
+export const joinGroup = (groupId) => api.post('/group/join', { groupId });
 export const searchGroups = (filters) => api.post('/group/search', filters);
 export const inviteMember = (inviteData) => api.post('/group/invite', inviteData);
 export const sendGroupMessage = (messageData) => api.post('/chat/send', messageData);

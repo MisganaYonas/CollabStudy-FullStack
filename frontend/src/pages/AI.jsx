@@ -7,13 +7,11 @@ import "../styles/general.css";
 export default function AIChat() {
   const inputFieldRef = useRef(null);
   const chatContainerRef = useRef(null);
-  const [userId, setUserId] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUserId(JSON.parse(storedUser)._id);
-    }
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
   }, []);
 
   function scrollToBottom() {
@@ -44,7 +42,7 @@ export default function AIChat() {
     const text = inputFieldRef.current.value.trim();
     if (!text) return;
 
-    if (!userId) {
+    if (!isLoggedIn) {
       alert("Please login first.");
       return;
     }
@@ -53,10 +51,7 @@ export default function AIChat() {
     inputFieldRef.current.value = "";
 
     try {
-      const response = await sendAIChat({ userId, prompt: text });
-      // Assuming response is { response: "AI text" } or similar.
-      // Spec doesn't define output format.
-      // But usually it returns a message.
+      const response = await sendAIChat({ message: text });
       const aiResponse = response.data.reply || response.data.response || response.data.message || JSON.stringify(response.data);
       addMessage(aiResponse, "ai");
     } catch (err) {
@@ -77,7 +72,7 @@ export default function AIChat() {
 
     inputField.addEventListener("keydown", handleKeyDown);
     return () => inputField.removeEventListener("keydown", handleKeyDown);
-  }, [userId]); // Re-bind if user changes, though unlikely on this page without reload
+  }, [isLoggedIn]); // Re-bind if user changes, though unlikely on this page without reload
 
   return (
     <div className="aipage-full">

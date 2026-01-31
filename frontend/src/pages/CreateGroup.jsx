@@ -102,8 +102,8 @@ function CreateGroup() {
     }
 
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (!user || !user._id) {
+      const token = localStorage.getItem("token");
+      if (!token) {
         showMessage("You must be logged in to create a group.", "red");
         return;
       }
@@ -114,32 +114,13 @@ function CreateGroup() {
         year,
         meetingTime: selectedTime,
         meetingDays: selectedDays,
-        maxMembers: parseInt(maxMembers),
-        adminId: user._id
+        membersCount: parseInt(maxMembers) // Send as membersCount to match Postman format
       };
 
+      console.log("Sending group data:", groupData);
+
       const response = await createGroup(groupData);
-      const newGroupId = response.data._id || response.data.groupId || response.data.id; // handle whatever backend returns
-
-      // Handle invites if any (Best effort)
-      // Note: Invite endpoint needs 'groupId' and 'email'.
-      // If we have members, we try to invite them.
-      // Assuming Create Group returns the object with _id.
-
-      // Since I don't know the exact response structure of Create (usually returns the created doc), I'll try to use _id.
-      if (members.length > 0 && newGroupId) {
-        for (const email of members) {
-          try {
-            // We need to import inviteMember but I didn't import it yet. I'll add it.
-            // Or I'll just skip auto-invite for now to be safe/simple and strict.
-            // The prompt says "Frontend must match backend exactly". Orchestration is allowed.
-            // But let's stick to core functionality first. 
-            // I'll just create the group. The user can invite later via GroupPage.
-          } catch (err) {
-            console.error("Failed to invite", email);
-          }
-        }
-      }
+      const newGroupId = response.data._id || response.data.groupId || response.data.id;
 
       showMessage("Study group created successfully!", "green");
       setTimeout(() => {
@@ -148,7 +129,7 @@ function CreateGroup() {
 
     } catch (error) {
       console.error("Create group error:", error);
-      showMessage(error.response?.data?.message || "Failed to create group", "red");
+      showMessage(error.response?.data?.error || "Failed to create group", "red");
     }
   };
 
@@ -209,11 +190,11 @@ function CreateGroup() {
                 <label>Year*</label>
                 <select value={year} onChange={(e) => setYear(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}>
                   <option value="">Select Year</option>
-                  <option value="1st Year">1st Year</option>
-                  <option value="2nd Year">2nd Year</option>
-                  <option value="3rd Year">3rd Year</option>
-                  <option value="4th Year">4th Year</option>
-                  <option value="5th Year">5th Year</option>
+                  <option value="1st year">1st Year</option>
+                  <option value="2nd year">2nd Year</option>
+                  <option value="3rd year">3rd Year</option>
+                  <option value="4th year">4th Year</option>
+                  <option value="5th year">5th Year</option>
                   <option value="Graduate">Graduate</option>
                 </select>
               </div>
