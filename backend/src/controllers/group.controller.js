@@ -144,7 +144,29 @@ class GroupController {
     }
   }
 
-  /* ---------------- GET GROUP ---------------- */
+  /* ---------------- GET USER GROUPS ---------------- */
+  async getUserGroups(req, res, userDecoded) {
+    try {
+      const userId = userDecoded.id;
+      
+      // Get groups where user is admin (created groups)
+      const createdGroups = await this.groupModel.searchGroups({ admin: userId });
+      
+      // Get groups where user is a member (joined groups)
+      const joinedGroups = await this.groupModel.searchGroups({ members: userId });
+      
+      // Filter out created groups from joined groups to avoid duplicates
+      const filteredJoinedGroups = joinedGroups.filter(group => group.admin !== userId);
+      
+      return this.sendJSON(res, 200, {
+        createdGroups,
+        joinedGroups: filteredJoinedGroups
+      });
+    } catch (error) {
+      console.error("Get user groups error:", error);
+      return this.sendJSON(res, 500, { error: "Failed to get user groups", details: error.message });
+    }
+  }
   async getGroup(req, res, userDecoded) {
     try {
       const url = new URL(req.url, `http://${req.headers.host}`);

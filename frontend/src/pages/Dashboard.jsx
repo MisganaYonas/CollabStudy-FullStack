@@ -504,7 +504,7 @@ export default function Dashboard() {
                           </svg>
                         </span>
                         {/* Admin field might not be in the lightweight group search object unless backend provides it. Inspecting "3. GET PROFILE" calls, but here it's Group Search. Backend 'create' sets admin. 'search' might return it. Assuming it does. */}
-                        <span>Admin: {group.admin?.username || "Unknown"}</span>
+                        <span>Admin: {group.adminUsername || "Unknown"}</span>
                       </div>
                       <div className="detail-item">
                         {/* Removed Type (Online/InPerson) as it's not in CreateGroup spec */}

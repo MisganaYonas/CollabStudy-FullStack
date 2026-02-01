@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getUserGroups } from "../api";
 import "../styles/myProfile.css";
 import "../styles/general.css";
 
@@ -15,6 +16,9 @@ export default function MyProfile() {
   const [bio, setBio] = useState("");
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState("");
+  const [createdGroups, setCreatedGroups] = useState([]);
+  const [joinedGroups, setJoinedGroups] = useState([]);
+  const [groupsLoading, setGroupsLoading] = useState(true);
 
   // Fetch profile on load
   useEffect(() => {
@@ -48,7 +52,20 @@ export default function MyProfile() {
     };
 
     fetchProfile();
+    fetchUserGroups();
   }, [token, navigate]);
+
+  const fetchUserGroups = async () => {
+    try {
+      const response = await getUserGroups();
+      setCreatedGroups(response.data.createdGroups || []);
+      setJoinedGroups(response.data.joinedGroups || []);
+    } catch (error) {
+      console.error("Failed to fetch user groups:", error);
+    } finally {
+      setGroupsLoading(false);
+    }
+  };
 
   const toggleEditing = async () => {
     if (editing) {
@@ -202,6 +219,50 @@ export default function MyProfile() {
           <button className="delete-account-btn" onClick={confirmDeleteAccount}>
             Delete Account
           </button>
+        </div>
+
+        <div className="groups-section">
+          <h2 className="section-title">My Groups</h2>
+          
+          <div className="groups-container">
+            <div className="group-category">
+              <h3>Created Groups ({createdGroups.length})</h3>
+              {groupsLoading ? (
+                <p>Loading groups...</p>
+              ) : createdGroups.length > 0 ? (
+                <div className="groups-list">
+                  {createdGroups.map((group) => (
+                    <div key={group._id} className="group-card" onClick={() => navigate(`/GroupPage?groupId=${group._id}`)}>
+                      <h4>{group.name}</h4>
+                      <p>{group.department} • {group.year}</p>
+                      <span className="group-role">Admin</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-groups">No groups created yet</p>
+              )}
+            </div>
+
+            <div className="group-category">
+              <h3>Joined Groups ({joinedGroups.length})</h3>
+              {groupsLoading ? (
+                <p>Loading groups...</p>
+              ) : joinedGroups.length > 0 ? (
+                <div className="groups-list">
+                  {joinedGroups.map((group) => (
+                    <div key={group._id} className="group-card" onClick={() => navigate(`/GroupPage?groupId=${group._id}`)}>
+                      <h4>{group.name}</h4>
+                      <p>{group.department} • {group.year}</p>
+                      <span className="group-role">Member</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-groups">No groups joined yet</p>
+              )}
+            </div>
+          </div>
         </div>
       </main>
     </div>

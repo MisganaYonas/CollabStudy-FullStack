@@ -32,6 +32,7 @@ export const searchGroups = (filters) => api.post('/group/search', filters);
 export const inviteMember = (inviteData) => api.post('/group/invite', inviteData);
 export const sendGroupMessage = (messageData) => api.post('/chat/send', messageData);
 export const getGroupMessages = (groupId) => api.get(`/chat/messages?groupId=${groupId}`);
+export const getUserGroups = () => api.get('/group/user-groups');
 export const sendAIChat = (promptData) => api.post('/ai/chat', promptData);
 
 export default api;

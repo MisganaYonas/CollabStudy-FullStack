@@ -1,4 +1,4 @@
-// src/config/db.js
+// src/config/db.js // mongodb client connects node.js to mongodb server
 const { MongoClient } = require("mongodb");
 require("dotenv").config();
 

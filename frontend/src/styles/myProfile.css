@@ -172,6 +172,85 @@ html, body, .whole-myprofile { height: 100%; margin: 0; }
 
 .delete-account-btn:hover { transform: scale(1.02); box-shadow: 0 4px 12px rgba(217,133,31,0.3); }
 
+/* Groups Section */
+.groups-section {
+  background: var(--panel);
+  border-radius: var(--card-radius);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  padding: 32px;
+  margin-top: 24px;
+}
+
+.section-title {
+  color: var(--brown);
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.groups-container {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.group-category h3 {
+  color: var(--teal);
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.groups-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.group-card {
+  background: var(--cream);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(217,133,31,0.1);
+}
+
+.group-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  border-color: var(--orange);
+}
+
+.group-card h4 {
+  color: var(--brown);
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.group-card p {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0 0 12px 0;
+}
+
+.group-role {
+  background: var(--orange);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.no-groups {
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
+  padding: 32px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .profile-header { padding: 20px; }

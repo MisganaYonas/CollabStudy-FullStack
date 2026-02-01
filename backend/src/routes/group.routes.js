@@ -86,12 +86,26 @@ async function joinGroup(req, res, db, userDecoded) {
   }
 }
 
+/**
+ * GET /api/group/user-groups
+ */
+async function getUserGroups(req, res, db, userDecoded) {
+  try {
+    return await getController(db).getUserGroups(req, res, userDecoded);
+  } catch (err) {
+    console.error("Get user groups error:", err);
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Failed to get user groups" }));
+  }
+}
+
 module.exports = {
   createGroup,
   inviteMember,
   searchGroups,
   getGroup,
   joinGroup,
+  getUserGroups,
 };
 
 

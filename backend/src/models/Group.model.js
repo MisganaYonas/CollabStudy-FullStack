@@ -41,13 +41,45 @@ class GroupModel {
     if (filters.year) query.year = filters.year;
     if (filters.meetingTime) query.meetingTime = filters.meetingTime;
     if (filters.status) query.status = filters.status;
+    if (filters.admin) query.admin = filters.admin;
+    if (filters.members) query.members = filters.members;
 
     // Meeting Days (array match: all specified days must be present)
     if (filters.meetingDays && Array.isArray(filters.meetingDays) && filters.meetingDays.length > 0) {
       query.meetingDays = { $all: filters.meetingDays };
     }
 
-    return this.collection.find(query).toArray();
+    // Use aggregation to populate admin username and calculate member count
+    const pipeline = [
+      { $match: query },
+      {
+        $addFields: {
+          adminObjectId: { $toObjectId: "$admin" }
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "adminObjectId",
+          foreignField: "_id",
+          as: "adminUser"
+        }
+      },
+      {
+        $addFields: {
+          membersCount: { $size: "$members" },
+          adminUsername: { $arrayElemAt: ["$adminUser.username", 0] }
+        }
+      },
+      {
+        $project: {
+          adminUser: 0,
+          adminObjectId: 0
+        }
+      }
+    ];
+
+    return this.collection.aggregate(pipeline).toArray();
   }
 
   async getGroupById(groupId) {
@@ -56,16 +88,21 @@ class GroupModel {
   }
 
   async addMember(groupId, userId) {
-    // Add member and potentially update status to Active if members > 1
-    // We do this in two steps or pipeline? 
-    // Simple approach: just add. Controller handles status logic or we use pipeline.
-    // Requirement: "Update status to 'Active' if members.length > 1"
-
-    // We'll just push the member here. Logic for status update can be done after check or here.
-    return this.collection.updateOne(
+    // Add member and update membersCount
+    const result = await this.collection.updateOne(
       { _id: new ObjectId(groupId) },
-      { $addToSet: { members: userId } }
+      { 
+        $addToSet: { members: userId },
+      }
     );
+    
+    // Update membersCount to reflect actual array size
+    await this.collection.updateOne(
+      { _id: new ObjectId(groupId) },
+      [{ $set: { membersCount: { $size: "$members" } } }]
+    );
+    
+    return result;
   }
 
   async updateStatus(groupId, status) {

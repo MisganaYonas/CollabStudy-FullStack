@@ -260,6 +260,9 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && pathname === "/api/group/search") {
       return groupRoutes.searchGroups(req, res, dbInstance, userDecoded);
     }
+    if (req.method === "GET" && pathname === "/api/group/user-groups") {
+      return groupRoutes.getUserGroups(req, res, dbInstance, userDecoded);
+    }
   }
 
   /* ---------------- FALLBACK ---------------- */
