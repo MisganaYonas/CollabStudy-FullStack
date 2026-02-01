@@ -22,6 +22,7 @@ class MessageModel {
   };
   }
 
+  // limit = 50 means it will fetch at most 50 messages unless you specify otherwise.
   async getMessagesByGroup(groupId, limit = 50) {
     return this.collection
       .find({ groupId: new ObjectId(groupId) })
@@ -30,9 +31,6 @@ class MessageModel {
       .toArray();
   }
 
-  async deleteMessagesByUser(userId) {
-    return this.collection.deleteMany({ senderId: userId });
-  }
 }
 
 module.exports = MessageModel;

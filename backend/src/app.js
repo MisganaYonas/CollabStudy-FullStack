@@ -14,6 +14,7 @@ const chatRoutes = require("./routes/chat.routes");
 const aiRoutes = require("./routes/ai.routes");
 const groupRoutes = require("./routes/group.routes");
 const userRoutes = require("./routes/user.routes");
+const authRoutes = require("./routes/auth.routes");
 const enableCORS = require("./middleware/cors");
 
 /* ---------------- CONFIG ---------------- */
@@ -65,58 +66,19 @@ const server = http.createServer(async (req, res) => {
   const urlObj = new URL(req.url, `http://${req.headers.host}`);
   const pathname = urlObj.pathname;
 
-  /* ---------------- HEALTH ---------------- */
+  /* ----------------Backend Running----------- */
   if (req.method === "GET" && pathname === "/") {
-    return sendJSON(res, 200, { message: "Backend running 🚀" });
+    return sendJSON(res, 200, { message: "Backend running" });
   }
 
   /* ---------------- SIGNUP ---------------- */
   if (req.method === "POST" && pathname === "/api/signup") {
-    const { username, email, password, confirmPassword, department, year } = await getBody(req);
-
-    if (!username || !email || !password || !confirmPassword || !department || !year) {
-      return sendJSON(res, 400, { error: "All fields are required" });
-    }
-
-    if (!validateEmail(email)) return sendJSON(res, 400, { error: "Invalid AAU email format" });
-    if (password.length < 8) return sendJSON(res, 400, { error: "Password must be at least 8 characters" });
-    if (password !== confirmPassword) return sendJSON(res, 400, { error: "Passwords do not match" });
-
-    const users = dbInstance.collection("users");
-    const existingUser = await users.findOne({ $or: [{ email }, { username }] });
-    if (existingUser) return sendJSON(res, 400, { error: "Username or email already exists" });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    await users.insertOne({ username, email, password: hashedPassword, department, year, createdAt: new Date() });
-    return sendJSON(res, 201, { message: "Signup successful" });
+    return authRoutes.signup(req, res, dbInstance);
   }
 
   /* ---------------- LOGIN ---------------- */
   if (req.method === "POST" && pathname === "/api/login") {
-    const { email, password } = await getBody(req);
-    if (!email || !password) return sendJSON(res, 400, { error: "Email and password required" });
-
-    const users = dbInstance.collection("users");
-    const user = await users.findOne({ email });
-    if (!user) return sendJSON(res, 400, { error: "User not found" });
-
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return sendJSON(res, 400, { error: "Incorrect password" });
-
-    const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "1h" });
-
-    return sendJSON(res, 200, {
-      message: "Login successful",
-      token,
-      user: {
-        username: user.username,
-        email: user.email,
-        department: user.department,
-        year: user.year,
-        bio: user.bio || ""
-      }
-    });
+    return authRoutes.login(req, res, dbInstance);
   }
 
   /* ---------------- PROFILE (GET) ---------------- */
@@ -197,18 +159,12 @@ const server = http.createServer(async (req, res) => {
 
   /* ---------------- DELETE ACCOUNT ---------------- */
   if (pathname === "/api/user/delete" && req.method === "DELETE") {
-    const userDecoded = authMiddleware(req, res);
-    if (!userDecoded) return;
+    return userRoutes.deleteAccount(req, res, dbInstance);
+  }
 
-    try {
-      const { ObjectId } = require("mongodb");
-      const users = dbInstance.collection("users");
-      await users.deleteOne({ _id: new ObjectId(userDecoded.id) });
-      return sendJSON(res, 200, { message: "Account deleted successfully" });
-    } catch (err) {
-      console.error(err);
-      return sendJSON(res, 500, { error: "Server error" });
-    }
+  /* ---------------- FORGET PASSWORD ---------------- */
+  if (pathname === "/api/user/forget-password" && req.method === "POST") {
+    return userRoutes.forgetPassword(req, res, dbInstance);
   }
 
   /* ---------------- AI CHAT ---------------- */
@@ -279,7 +235,7 @@ wss.on("connection", (ws) => {
 
 /* ---------------- START ---------------- */
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
 
 module.exports = server;

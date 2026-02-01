@@ -6,6 +6,7 @@ class AIController {
     this.aiConversations = db.collection("ai_conversations");
   }
 
+  // userDecoded is the decoded JWT token, containing user info like id.
   async chat(req, res, userDecoded) {
     try {
       const body = await this.getBody(req);

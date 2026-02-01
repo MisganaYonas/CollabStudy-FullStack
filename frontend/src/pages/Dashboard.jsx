@@ -111,7 +111,7 @@ export default function Dashboard() {
       // I'll assume if filters are essentially empty (or default), show Top 4.
       // If user is searching, show results.
 
-      const isDefaultFilters = !searchTerm && !majorFilter && yearFilter === "All Years" && timeFilter === "Any Time" && statusFilter === "All Status";
+      const isDefaultFilters = !searchTerm && !courseFilter && !majorFilter && yearFilter === "All Years" && timeFilter === "Any Time" && statusFilter === "All Status";
 
       if (isDefaultFilters) {
         // Sort by membersCount DESC
@@ -119,7 +119,6 @@ export default function Dashboard() {
         // Take top 4
         fetchedGroups = fetchedGroups.slice(0, 4);
       } else {
-        // If searching, maybe don't limit to 4? Spec just says "REPLACE Highest Rated Groups ... with Top 4".
         // It implies the DASHBOARD VIEW is Top 4.
         // If I search, I probably want to see results.
         // I'll leave it as is.
@@ -170,7 +169,7 @@ export default function Dashboard() {
     );
   }
 
-  const isDefaultFilters = !searchTerm && !majorFilter && yearFilter === "All Years" && timeFilter === "Any Time" && statusFilter === "All Status";
+  const isDefaultFilters = !searchTerm && !courseFilter && !majorFilter && yearFilter === "All Years" && timeFilter === "Any Time" && statusFilter === "All Status";
   const sectionTitle = isDefaultFilters ? "Top 4 Groups by Members" : "Search Results";
 
   return (
@@ -357,11 +356,11 @@ export default function Dashboard() {
                     onChange={(e) => setYearFilter(e.target.value)}
                   >
                     <option>All Years</option>
-                    <option>1st Year</option>
-                    <option>2nd Year</option>
-                    <option>3rd Year</option>
-                    <option>4th Year</option>
-                    <option>5th Year</option>
+                    <option>1st year</option>
+                    <option>2nd year</option>
+                    <option>3rd year</option>
+                    <option>4th year</option>
+                    <option>5th year</option>
                     <option>Graduate</option>
                   </select>
                 </div>

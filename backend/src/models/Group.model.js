@@ -35,14 +35,22 @@ class GroupModel {
       query.name = { $regex: filters.name, $options: "i" };
     }
 
+    // Course search - search in name field
+    if (filters.course) {
+      query.name = { $regex: filters.course, $options: "i" };
+    }
+
     // Exact matches
-    if (filters.course) query.course = filters.course;
     if (filters.department) query.department = filters.department;
-    if (filters.year) query.year = filters.year;
     if (filters.meetingTime) query.meetingTime = filters.meetingTime;
     if (filters.status) query.status = filters.status;
     if (filters.admin) query.admin = filters.admin;
     if (filters.members) query.members = filters.members;
+
+    // Year filter with case normalization
+    if (filters.year) {
+      query.year = filters.year.toLowerCase();
+    }
 
     // Meeting Days (array match: all specified days must be present)
     if (filters.meetingDays && Array.isArray(filters.meetingDays) && filters.meetingDays.length > 0) {

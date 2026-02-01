@@ -244,7 +244,7 @@ export default function GroupPage() {
                   </svg>
                 </div>
                 <div className="grouppage-message-content">
-                  <div className="grouppage-message-sender">{msg.senderName === user?.username ? "You" : msg.senderName}</div>
+                  <div className="grouppage-message-sender">{msg.senderName}</div>
                   {/* Note: Logic to resolve senderId to name requires a user list or lookup, but backend message just returns what's stored. Spec doesn't clarify return type. Assuming simple storage. */}
                   <div className="grouppage-message-bubble">
                     <p>{msg.message}</p>

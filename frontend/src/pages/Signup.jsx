@@ -27,6 +27,7 @@ function Signup() {
     setMessageType("success");
   };
 
+  // create account handler
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -67,18 +68,12 @@ function Signup() {
       // Signup successful
       showSuccess("Account created successfully!");
 
-      // Store token if returned
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
+      // Clear any existing user data
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
 
-      // Optionally store user info
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
-
-      // Redirect to dashboard after short delay
-      setTimeout(() => navigate("/dashboard"), 1000);
+      // Redirect to login page
+      setTimeout(() => navigate("/login"), 1000);
 
     } catch (err) {
       console.error(err);
