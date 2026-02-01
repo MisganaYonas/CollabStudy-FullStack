@@ -8,7 +8,7 @@ require("dotenv").config({ path: "../.env" });
 /* ---------------- IMPORTS ---------------- */
 const { connectDB } = require("./config/db");
 const validateEmail = require("./utils/validateEmail");
-const authMiddleware = require("./utils/authMiddleware");
+const authMiddleware = require("./middleware/auth.middleware");
 
 const chatRoutes = require("./routes/chat.routes");
 const aiRoutes = require("./routes/ai.routes");

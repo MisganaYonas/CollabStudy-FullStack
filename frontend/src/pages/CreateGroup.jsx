@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { createGroup } from "../api";
+import { createGroup, inviteMember } from "../api";
 import "../styles/createGroup.css";
 import Logo from "../images/Logo.png";
 
@@ -34,22 +34,6 @@ function CreateGroup() {
   };
 
   const handleAddMember = () => {
-    // NOTE: The Create Group endpoint does NOT take a list of members. 
-    // Spec: "Defaults: admin = creator, members = [admin]".
-    // Invitation is a SEPARATE endpoint: "8. INVITE MEMBER".
-    // So I cannot add members during creation.
-    // I should probably remove this step or explain that members can be invited AFTER creation.
-    // But wait, the mock UI has "Members" step.
-    // If strict backend matching: I create group first. THEN I call invite for each member?
-    // Or I just remove the Member step to simplify and stick to "Create Group" endpoint.
-    // "Frontend must match backend exactly".
-    // I will Change Step 3 to "Review"? Or just remove Step 3?
-    // If I remove Step 3, the user might be confused.
-    // I'll keep the UI but change logic: 
-    // 1. Call Create Group. 
-    // 2. If success, Call Invite for each email in the list.
-    // This seems like a good "Frontend" feature that orchestrates multiple backend calls.
-
     if (!memberEmail) {
       showMessage("Please enter an email to add.", "red");
       return;
@@ -58,13 +42,13 @@ function CreateGroup() {
       showMessage("Only AAU email addresses are allowed.", "red");
       return;
     }
-    // Just local state validation
-    showMessage(`Ready to invite: ${memberEmail}`, "green");
-    // I'll just store it in a temp list to invite later? 
-    // Wait, the current code stores in `members`.
-    // I will use that.
+    if (members.includes(memberEmail)) {
+      showMessage("Email already added.", "red");
+      return;
+    }
     setMembers((prev) => [...prev, memberEmail]);
     setMemberEmail("");
+    showMessage(`${memberEmail} added to invite list.`, "green");
   };
 
   const [members, setMembers] = useState([]);
@@ -120,9 +104,22 @@ function CreateGroup() {
       console.log("Sending group data:", groupData);
 
       const response = await createGroup(groupData);
-      const newGroupId = response.data._id || response.data.groupId || response.data.id;
+      const newGroupId = response.data.group._id || response.data.group.groupId || response.data.group.id;
 
-      showMessage("Study group created successfully!", "green");
+      // Invite members if any were added
+      if (members.length > 0) {
+        for (const email of members) {
+          try {
+            await inviteMember({ groupId: newGroupId, email });
+          } catch (inviteError) {
+            console.error(`Failed to invite ${email}:`, inviteError);
+          }
+        }
+        showMessage(`Group created and ${members.length} invitation(s) sent!`, "green");
+      } else {
+        showMessage("Study group created successfully!", "green");
+      }
+      
       setTimeout(() => {
         navigate("/dashboard");
       }, 1500);
@@ -269,14 +266,55 @@ function CreateGroup() {
             <section className="card-section">
               <div className="section-header">
                 <span className="section-icon"></span>
-                <h2>Invites (Skipped for creation)</h2>
+                <h2>Invite Members (Optional)</h2>
               </div>
 
-              <div className="members-bar">
-                <div className="members-info">
-                  <p>Groups are created with you as the admin. You can invite members after creation from the Group Page.</p>
+              <div className="field-group">
+                <label>Member Email</label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input 
+                    type="email" 
+                    placeholder="student@aau.edu.et"
+                    value={memberEmail}
+                    onChange={(e) => setMemberEmail(e.target.value)}
+                    style={{ flex: 1 }}
+                  />
+                  <button 
+                    type="button" 
+                    onClick={handleAddMember}
+                    style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px' }}
+                  >
+                    Add
+                  </button>
                 </div>
               </div>
+
+              {members.length > 0 && (
+                <div className="members-list" style={{ marginTop: '15px' }}>
+                  <label>Members to Invite:</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                    {members.map((email, index) => (
+                      <span key={index} style={{ 
+                        backgroundColor: '#e9ecef', 
+                        padding: '5px 10px', 
+                        borderRadius: '15px', 
+                        fontSize: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px'
+                      }}>
+                        {email}
+                        <button 
+                          onClick={() => setMembers(prev => prev.filter((_, i) => i !== index))}
+                          style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
             </section>
           )}

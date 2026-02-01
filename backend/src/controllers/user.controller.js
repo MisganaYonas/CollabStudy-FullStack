@@ -1,6 +1,6 @@
 // src/controllers/user.controller.js
 const { ObjectId } = require("mongodb");
-const authMiddleware = require("../utils/authMiddleware");
+const authMiddleware = require("../middleware/auth.middleware");
 
 class UserController {
   constructor(db) {

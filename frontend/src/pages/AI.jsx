@@ -8,34 +8,77 @@ export default function AIChat() {
   const inputFieldRef = useRef(null);
   const chatContainerRef = useRef(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [messages, setMessages] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
+    
+    // Load saved messages from localStorage
+    const savedMessages = localStorage.getItem('aiChatMessages');
+    if (savedMessages) {
+      setMessages(JSON.parse(savedMessages));
+    }
   }, []);
+
+  // Save messages to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem('aiChatMessages', JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  // Render messages when component mounts or messages change
+  useEffect(() => {
+    renderMessages();
+  }, [messages]);
 
   function scrollToBottom() {
     const chatContainer = chatContainerRef.current;
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
   }
 
-  function addMessage(text, sender = "user") {
-    const msgDiv = document.createElement("div");
-    msgDiv.classList.add("aipage-message-box");
-    if (sender === "ai") msgDiv.classList.add("aipage-ai-message");
-    msgDiv.textContent = text;
+  function renderMessages() {
+    const chatContainer = chatContainerRef.current;
+    if (!chatContainer) return;
 
-    const timestamp = document.createElement("div");
-    timestamp.classList.add("aipage-timestamp");
+    // Clear existing messages (except header and spacer)
+    const existingMessages = chatContainer.querySelectorAll('.aipage-message-box:not(.aipage-initial-message)');
+    existingMessages.forEach(msg => msg.remove());
+
+    // Render all messages
+    messages.forEach(message => {
+      const msgDiv = document.createElement("div");
+      msgDiv.classList.add("aipage-message-box");
+      if (message.sender === "ai") msgDiv.classList.add("aipage-ai-message");
+      msgDiv.textContent = message.text;
+
+      const timestamp = document.createElement("div");
+      timestamp.classList.add("aipage-timestamp");
+      timestamp.textContent = message.timestamp;
+      msgDiv.appendChild(timestamp);
+
+      const spacer = chatContainer.querySelector(".aipage-spacer");
+      chatContainer.insertBefore(msgDiv, spacer);
+    });
+    
+    scrollToBottom();
+  }
+
+  function addMessage(text, sender = "user") {
     const now = new Date();
     const hours = now.getHours().toString().padStart(2, "0");
     const minutes = now.getMinutes().toString().padStart(2, "0");
-    timestamp.textContent = `${hours}:${minutes}`;
-    msgDiv.appendChild(timestamp);
+    const timestamp = `${hours}:${minutes}`;
 
-    const spacer = chatContainerRef.current.querySelector(".aipage-spacer");
-    chatContainerRef.current.insertBefore(msgDiv, spacer);
-    scrollToBottom();
+    const newMessage = {
+      text,
+      sender,
+      timestamp,
+      id: Date.now() + Math.random()
+    };
+
+    setMessages(prev => [...prev, newMessage]);
   }
 
   async function sendMessage() {
@@ -125,7 +168,7 @@ export default function AIChat() {
           </Link>
         </div>
 
-        <div className="aipage-message-box">
+        <div className="aipage-message-box aipage-initial-message">
           Hello! I'm your AI study assistant. I can help you with study tips, group recommendations, course
           information, and more. How can I assist you today?
           <div className="aipage-timestamp">01:33 PM</div>
