@@ -144,7 +144,47 @@ class GroupController {
     }
   }
 
-  /* ---------------- GET USER GROUPS ---------------- */
+  /* ---------------- JOIN GROUP ---------------- */
+  async joinGroup(req, res, userDecoded) {
+    try {
+      const { groupId } = await this.getBody(req);
+      const userId = userDecoded.id;
+
+      if (!groupId) {
+        return this.sendJSON(res, 400, { error: "groupId is required" });
+      }
+
+      // Find Group
+      const group = await this.groupModel.getGroupById(groupId);
+      if (!group) {
+        return this.sendJSON(res, 404, { error: "Group not found" });
+      }
+
+      // Check if already a member
+      const isMember = group.members.some(m => m.toString() === userId);
+      if (isMember) {
+        return this.sendJSON(res, 400, { error: "User is already a member" });
+      }
+
+      // Check max members
+      if (group.members.length >= group.maxMembers) {
+        return this.sendJSON(res, 400, { error: "Group is full" });
+      }
+
+      // Add Member
+      await this.groupModel.addMember(groupId, userId);
+
+      // Update Status if needed
+      if (group.members.length + 1 > 1 && group.status !== "Active") {
+        await this.groupModel.updateStatus(groupId, "Active");
+      }
+
+      return this.sendJSON(res, 200, { message: "Successfully joined group" });
+    } catch (error) {
+      console.error("Join group error:", error);
+      return this.sendJSON(res, 500, { error: "Failed to join group", details: error.message });
+    }
+  }
   async getUserGroups(req, res, userDecoded) {
     try {
       const userId = userDecoded.id;

@@ -67,6 +67,18 @@ export default function MyProfile() {
     }
   };
 
+  // Refresh groups when component becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchUserGroups();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   const toggleEditing = async () => {
     if (editing) {
       setStatusMessage("Saving...");

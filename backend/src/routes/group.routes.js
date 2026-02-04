@@ -87,6 +87,19 @@ async function joinGroup(req, res, db, userDecoded) {
 }
 
 /**
+ * POST /api/group/join
+ */
+async function joinGroup(req, res, db, userDecoded) {
+  try {
+    return await getController(db).joinGroup(req, res, userDecoded);
+  } catch (err) {
+    console.error("Join group error:", err);
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Failed to join group" }));
+  }
+}
+
+/**
  * GET /api/group/user-groups
  */
 async function getUserGroups(req, res, db, userDecoded) {
