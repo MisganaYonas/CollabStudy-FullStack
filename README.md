@@ -6,6 +6,10 @@ CollabStudy is a collaborative study-group platform designed for students at **A
 
 Finding the right study partners can be challenging, especially when students have different schedules, courses, and academic interests. CollabStudy aims to make this process easier by providing a centralized platform where students can discover existing study groups or create their own.
 
+Live Demo
+
+https://collab-study-snowy.vercel.app/
+
 ##  Table of Contents
 
 - [Project Overview](#-project-overview)
