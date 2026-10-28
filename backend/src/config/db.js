@@ -1,6 +1,6 @@
 // src/config/db.js // mongodb client class connects node.js to mongodb server
 const { MongoClient } = require("mongodb");
-require("dotenv").config();
+require("dotenv").config({ path: require("path").resolve(__dirname, "../../.env") });
 
 if (!process.env.MONGO_URI) {
   console.error("❌ FATAL ERROR: MONGO_URI is not defined.");

@@ -3,7 +3,7 @@ const { URL } = require("url");
 const WebSocket = require("ws");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-require("dotenv").config({ path: "../.env" });
+require("dotenv").config({ path: require("path").resolve(__dirname, "../.env") });
 
 /* ---------------- IMPORTS ---------------- */
 const { connectDB } = require("./config/db");
